@@ -1,4 +1,4 @@
-?RCS: $Id: startsh.U,v 3.0.1.1 1997/02/28 16:25:31 ram Exp $
+?RCS: $Id: startsh.U,v 3.0 1993/08/18 12:09:51 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,29 +9,25 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: startsh.U,v $
-?RCS: Revision 3.0.1.1  1997/02/28  16:25:31  ram
-?RCS: patch61: avoid needless chatter since this is now done very early
-?RCS:
 ?RCS: Revision 3.0  1993/08/18  12:09:51  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:startsh: sh sharpbang eunicefix
+?MAKE:startsh: sharpbang eunicefix
 ?MAKE:	-pick add $@ %<
 ?S:startsh:
 ?S:	This variable contains the string to put on the front of a shell
 ?S:	script to make sure (hopefully) that it runs with sh and not some
 ?S:	other shell.
 ?S:.
-?F:!try
+?T:SYSTYPE
 : figure out how to guarantee sh startup
-?X: Avoid needless chatter since this is now done very early.
-?X: echo " "
-?X: echo "Checking out how to guarantee sh startup..." >&2
-case "$startsh" in
-'') startsh=${sharpbang}${sh} ;;
-*)
-?X: echo "Let's see if '$startsh' works..." ;;
+echo " "
+echo "Checking out how to guarantee sh startup..." >&4
+case "$SYSTYPE" in
+*bsd*|sys5*) startsh=$sharpbang"/$SYSTYPE/bin/sh";;
+*) startsh=$sharpbang'/bin/sh';;
 esac
+echo "Let's see if '$startsh' works..."
 cat >try <<EOSS
 $startsh
 set abc
@@ -41,10 +37,9 @@ EOSS
 chmod +x try
 $eunicefix try
 if ./try; then
-	: echo "Yup, it does."
+	echo "Yup, it does."
 else
-	echo "Hmm... '$startsh' does not guarantee sh startup..."
-	echo "You may have to fix up the shell scripts to make sure $sh runs them."
+echo "Nope.  You may have to fix up the shell scripts to make sure sh runs them."
 fi
 rm -f try
 

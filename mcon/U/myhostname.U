@@ -1,4 +1,4 @@
-?RCS: $Id: myhostname.U,v 3.0.1.3 1997/02/28 16:15:55 ram Exp $
+?RCS: $Id: myhostname.U,v 3.0.1.2 1994/10/29 16:25:43 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: myhostname.U,v $
-?RCS: Revision 3.0.1.3  1997/02/28  16:15:55  ram
-?RCS: patch61: improved hostname lookup by using ypmatch when NIS is used
-?RCS:
 ?RCS: Revision 3.0.1.2  1994/10/29  16:25:43  ram
 ?RCS: patch36: call ./xenix explicitely instead of relying on PATH
 ?RCS: patch36: now uses new Tr unit to convert to/from lowercase
@@ -23,7 +20,7 @@
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
 ?MAKE:myhostname phostname mydomain: contains sed test Myread Oldconfig \
-	Guess Loc awk echo sort uniq +usrinc rm hostcat Tr
+	Guess Loc awk sort uniq +usrinc rm hostcat Tr
 ?MAKE:	-pick add $@ %<
 ?S:myhostname (hostname):
 ?S:	This variable contains the eventual value of the MYHOSTNAME symbol,
@@ -60,7 +57,7 @@
 ?H:#define MYHOSTNAME "$myhostname"		/**/
 ?H:#define MYDOMAIN "$mydomain"		/**/
 ?H:.
-?T:cont i tans tmp_re
+?T:cont i tans
 : now get the host name
 echo " "
 echo "Figuring out host name..." >&4
@@ -163,46 +160,17 @@ case "$myhostname" in
 ?X: unit. However, we want to stick the sanity checks right after the domain
 ?X: name computation, or if none is done, right after the hostname computation.
 ?X:
-		{
-?X: If we use NIS, try ypmatch.
-			test "X$hostcat" = "Xypcat hosts" &&
-			ypmatch "$myhostname" hosts 2>/dev/null |\
-				$sed -e 's/[	 ]*#.*//; s/$/ /' > hosts && \
-			$test -s hosts
-		} || {
-?X: Extract only the relevant hosts, reducing file size,
-?X: remove comments, insert trailing space for later use.
-		     	$hostcat | $sed -n -e "s/[	 ]*#.*//; s/\$/ /
-					/[	 ]$myhostname[	. ]/p" > hosts
-		}
-		tmp_re="[	. ]"
-		$test x`$awk "/[0-9].*[	 ]$myhostname$tmp_re/ { sum++ }
-			     END { print sum }" hosts` = x1 || tmp_re="[	 ]"
-		dflt=.`$awk "/[0-9].*[	 ]$myhostname$tmp_re/ {for(i=2; i<=NF;i++) print \\\$i}" \
+		$hostcat >hosts
+		dflt=.`$awk "/[0-9].*$myhostname/ {for(i=2; i<=NF;i++) print \\\$i}" \
 			hosts | $sort | $uniq | \
-			$sed -n -e "s/$myhostname\.\([-a-zA-Z0-9_.]\)/\1/p"`
-		case `$echo X$dflt` in
-		X*\ *)	echo "(Several hosts in /etc/hosts matched hostname)"
-			dflt=.
-			;;
-		X.) echo "(You do not have fully-qualified names in /etc/hosts)"
-			;;
-		esac
+			$sed -n -e "s/$myhostname\.\([a-zA-Z_.]\)/\1/p"`
 		case "$dflt" in
-		.)
+		.) echo "(You do not have fully-qualified names in /etc/hosts)"
 			tans=`./loc resolv.conf X /etc /usr/etc`
 			if $test -f "$tans"; then
 				echo "(Attempting domain name extraction from $tans)"
-?X: Look for either a search or a domain directive.
-				dflt=.`$sed -n -e 's/	/ /g' \
-				  -e 's/^search  *\([^ ]*\).*/\1/p' $tans \
-				  | ./tr '[A-Z]' '[a-z]' 2>/dev/null`
-				case "$dflt" in
-				.) dflt=.`$sed -n -e 's/	/ /g' \
-				     -e 's/^domain  *\([^ ]*\).*/\1/p' $tans \
-				     | ./tr '[A-Z]' '[a-z]' 2>/dev/null`
-  					;;
-				esac
+				dflt=.`egrep '^domain' $tans | $sed 's/domain[ 	]*\(.*\)/\1/' \
+					| ./tr '[A-Z]' '[a-z]' 2>/dev/null`
 			fi
 			;;
 		esac

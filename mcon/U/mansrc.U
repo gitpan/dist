@@ -1,4 +1,4 @@
-?RCS: $Id: mansrc.U,v 3.0.1.9 1997/02/28 16:12:03 ram Exp $
+?RCS: $Id: mansrc.U,v 3.0.1.8 1995/09/25 09:16:58 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: mansrc.U,v $
-?RCS: Revision 3.0.1.9  1997/02/28  16:12:03  ram
-?RCS: patch61: don't ask for AFS when they choose to not install pages
-?RCS:
 ?RCS: Revision 3.0.1.8  1995/09/25  09:16:58  ram
 ?RCS: patch59: unit is now forced to the top of Configure, if possible
 ?RCS:
@@ -115,7 +112,7 @@ case "$mansrc" in
 '') mansrc=' '
 	installmansrc='';;
 esac
-if $afs && $test "$mansrc"; then
+if $afs; then
 	$cat <<EOM
 
 Since you are running AFS, I need to distinguish the directory in which

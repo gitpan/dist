@@ -20,7 +20,7 @@ $spitshell >metaconfig.$manext <<!GROK!THIS!
 .TH METACONFIG $manext "Version $VERSION PL$PATCHLEVEL"
 ''' @(#) Manual page for metaconfig
 '''
-''' $Id: mconfig.SH,v 3.0.1.17 1997/02/28 16:29:31 ram Exp $
+''' $Id: mconfig.SH,v 3.0.1.16 1995/09/25 09:17:48 ram Exp $
 '''
 '''  Copyright (c) 1991-1993, Raphael Manfredi
 '''  
@@ -31,10 +31,6 @@ $spitshell >metaconfig.$manext <<!GROK!THIS!
 '''  of the source tree for dist 3.0.
 '''
 ''' $Log: mconfig.SH,v $
-''' Revision 3.0.1.17  1997/02/28  16:29:31  ram
-''' patch61: documents the runnning environment and the src.U unit
-''' patch61: added warnings for $_a and $_o, as well as "startsh"
-'''
 ''' Revision 3.0.1.16  1995/09/25  09:17:48  ram
 ''' patch59: documented new ?Y: directive
 ''' patch59: fixed my e-mail address
@@ -397,20 +393,9 @@ Use the getfile script when asking for a file pathname in order to
 have optional ~name expansion and sanity checks. See the Getfile.U
 unit for a full decription.
 .IP *
-Always put a
-.Ex
-	\$startsh
-.Ef
-at the top of every generated script that is going to be launched
-or sourced by \fIConfigure\fR.
-.IP *
-Never assume common UNIX-isms like the fact that an object file ends
-with a \fI.o\fR and that a library name ends with \fI.a\fR.
-Use the \fI\$_o\fR and \fI\$_a\fR variables instead (see Unix.U).
-.IP *
 When doing a compile-link-execute test, always write it like this:
 .Ex
-\$\&cc \$\&ccflags \$\&ldflags try.c -o try \$\&libs
+\$cc \$ccflags \$ldflags try.c -o try \$libs
 .Ef
 because some systems require that linking flags be specified before
 the compiled target (with the exception of trailing linking libraries).
@@ -1727,13 +1712,6 @@ if found. If no include files are specified, the unit looks
 in \fI<sys/types.h>\fR only. If you specifiy some includes, only those are
 looked at.
 .TP
-Unix.U
-The purpose of this unit is to define some of the most common UNIX-isms
-via variables which can be altered from the command line or via proper
-hint files. In particular, \fI\$_exe\fR, \fI\$_o\fR and \fI\$_a\fR
-are set. All the units should refer to \fI\$_o\fR and not to \fI.o\fR
-directly. The '.' is part of these variables.
-.TP
 Setvar.U
 This unit produces the \fI$setvar\fR variable, which is used internally
 by \fIConfigure\fR to set a \fIdefine\fR/\fRundef\fR value to a given symbol,
@@ -1999,35 +1977,6 @@ possible to use '\fB-U\fI symbol\fR' which will set \fIsymbol\fR to 'undef'.
 Print the version number of the \fImetaconfig\fR that generated this
 .I Configure
 script and exit.
-'''
-.SS Running Environment
-Upon starting, \fIConfigure\fR creates a local \fIUU\fR directory and runs
-from there. The directory is removed when Configure ends, but this means
-you must run the script from a place where you can write, i.e. not from
-a read-only file system.
-.PP
-You can run \fIConfigure\fR remotely though, as in:
-.Ex
-	../package/Configure
-.Ef
-to configure sources that are not present locally. All the generated files
-will be put in the directory where you're running the script from. This magic
-is done thanks to the src.U unit, which is setting the \fI\$src\fR
-and \fI\$rsrc\fR variables to point to the package sources. That path is
-full or relative, depending on whether \fIConfigure\fR was invoked via a
-full or relative path.
-.PP
-From within the \fIUU\fR subdirectory, you can use \fI\$rsrc\fR to access the
-source files (units referring to source files link hints shall always use
-this mechanism and not assume the file is present in the parent directory).
-All the Makefiles should use the \$src variable as a pointer to the sources
-from the top of the build directory (where \fIConfigure\fR is run), either
-directly or via a VPATH setting.
-.PP
-When running \fIConfigure\fR remotely, the .SH files are extracted in the
-build directory, not in the source tree. However, it requires some kind of
-a \fImake\fR support to be able to compile things in a build directory whilst
-the sources lie elsewhere.
 '''
 .SS Using Magic Redefinitions
 .PP

@@ -1,4 +1,4 @@
-?RCS: $Id: Options.U,v 3.0.1.7 1997/02/28 15:08:15 ram Exp $
+?RCS: $Id: Options.U,v 3.0.1.6 1995/09/25 09:14:46 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,10 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Options.U,v $
-?RCS: Revision 3.0.1.7  1997/02/28  15:08:15  ram
-?RCS: patch61: optdef.sh now starts with a "startsh"
-?RCS: patch61: moved some code from Head.U
-?RCS:
 ?RCS: Revision 3.0.1.6  1995/09/25  09:14:46  ram
 ?RCS: patch59: protected option parsing code against 'echo -*' option failure
 ?RCS:
@@ -43,11 +39,11 @@
 ?X: loading this file to fetch default answers would clobber the values set
 ?X:	herein.
 ?X:
-?MAKE:Options: startsh
+?MAKE:Options: Extract
 ?MAKE:	-pick wipe $@ %<
-?V:reuseval alldone error realsilent silent extractsh fastread \
-	override knowitall: config_sh
-?T:arg symbol
+?V:reuseval config_sh alldone error silent extractsh fastread \
+	override knowitall:
+?T:arg config symbol
 ?F:./optdef.sh
 : produce awk script to parse command line options
 cat >options.awk <<'EOF'
@@ -119,23 +115,6 @@ extractsh=''
 override=''
 knowitall=''
 rm -f optdef.sh
-cat >optdef.sh <<EOS
-$startsh
-EOS
-
-?X:
-?X: Given that we now have the possibility to execute Configure remotely
-?X: thanks to the new src.U support, we have to face the possibility
-?X: of having to ask where the source lie, which means we need the Myread.U
-?X: stuff and possibly other things that might echo something on the
-?X: screen...
-?X:
-?X: That's not pretty, and might be confusing in 99% of the time. So...
-?X: We introduce a new realsilent variable which is set when -s is given,
-?X: and we force silent=true if -S is supplied. The Extractall.U unit
-?X: will then undo the >&4 redirection based on the value of the
-?X: realsilent variable... -- RAM, 18/93/96
-?X:
 
 : option parsing
 while test $# -gt 0; do
@@ -155,11 +134,11 @@ while test $# -gt 0; do
 		shift;;
 	-h) shift; error=true;;
 	-r) shift; reuseval=true;;
-	-s) shift; silent=true; realsilent=true;;
+	-s) shift; silent=true;;
 	-E) shift; alldone=exit;;
 	-K) shift; knowitall=true;;
 	-O) shift; override=true;;
-	-S) shift; silent=true; extractsh=true;;
+	-S) shift; extractsh=true;;
 	-D)
 		shift
 		case "$1" in
@@ -196,7 +175,7 @@ done
 case "$error" in
 true)
 	cat >&2 <<EOM
-Usage: $me [-dehrsEKOSV] [-f config.sh] [-D symbol] [-D symbol=value]
+Usage: $me [-dehrEKOSV] [-f config.sh] [-D symbol] [-D symbol=value]
                  [-U symbol] [-U symbol=]
   -d : use defaults for all answers.
   -e : go on without questioning past the production of config.sh.
@@ -220,25 +199,6 @@ EOM
 	;;
 esac
 
-?X:
-?X: Unless they specified both -d and -e/E, make sure we're running
-?X: interactively, i.e. attached to a terminal. Moved from Head.U to be able
-?X: to handle batch configurations...
-?X:
-?X: We have to hardwire the Configure name and cannot use $me, since if they
-?X: said 'sh <Configure', then $me is 'sh'...
-?X:
-: Sanity checks
-case "$fastread$alldone" in
-yescont|yesexit) ;;
-*)
-	if test ! -t 0; then
-		echo "Say 'sh Configure', not 'sh <Configure'"
-		exit 1
-	fi
-	;;
-esac
-
 ?X: In silent mode, the standard output is closed. Questions are asked by
 ?X: outputing on file descriptor #4, which is the original stdout descriptor.
 ?X: This filters out all the "junk", since all the needed information is written
@@ -252,4 +212,26 @@ esac
 : run the defines and the undefines, if any, but leave the file out there...
 touch optdef.sh
 . ./optdef.sh
+
+?X: If extraction has been requested, load the configuration file, perform
+?X: the extraction and exit.
+case "$extractsh" in
+true)
+	case "$config_sh" in
+	'') config_sh='config.sh'; config='./config.sh';;
+	/*) config="$config_sh";;
+	*) config="./$config_sh";;
+	esac
+	echo " "
+	echo "Fetching answers from $config_sh..."
+	cd ..
+	. $config
+	test "$override" && . ./optdef.sh
+	echo " "
+	. ./UU/extract
+	rm -rf UU
+	echo "Done."
+	exit 0
+	;;
+esac
 

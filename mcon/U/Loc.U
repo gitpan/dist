@@ -1,4 +1,4 @@
-?RCS: $Id: Loc.U,v 3.0.1.10 1997/02/28 15:04:16 ram Exp $
+?RCS: $Id: Loc.U,v 3.0.1.9 1995/09/25 09:11:24 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,10 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Loc.U,v $
-?RCS: Revision 3.0.1.10  1997/02/28  15:04:16  ram
-?RCS: patch61: allow users to specify paths on the command line
-?RCS: patch61: will now substitute cp for ln if not supported
-?RCS:
 ?RCS: Revision 3.0.1.9  1995/09/25  09:11:24  ram
 ?RCS: patch59: commented the purpose of the #un-def directive
 ?RCS: patch59: abort Configure run when mandatory command is missing
@@ -61,20 +57,20 @@
 ?X: I put startsh at the end of the dependency list, in order to avoid the
 ?X: loading of the spitshell unit before the instructions.
 ?X:
-?MAKE:Loc Mcc awk ar bash bison byacc cat chgrp chmod chown \
+?MAKE:Loc Mcc awk bash bison byacc cat chgrp chmod chown \
 	comm compress cp cpio cpp csh date echo egrep emacs expr find flex \
-	gcc gzip grep inews ksh less line lint ln lp lpr ls mail mailx \
-	make mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail \
+	gcc grep inews ksh less line lint ln lp lpr ls mail mailx make \
+	mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail sh \
 	shar sleep smail sort submit tail tar tbl test touch tr troff \
-	uname uniq uuname vi zcat zip:  eunicefix n c Instruct Myread \
+	uname uniq uuname vi zcat:  eunicefix n c Instruct Myread \
 	startsh
 ?MAKE:	-pick weed $@ %<
-?LINT:describe Loc Mcc awk ar bash bison byacc cat chgrp chmod chown \
+?LINT:describe Loc Mcc awk bash bison byacc cat chgrp chmod chown \
 	comm compress cp cpio cpp csh date echo egrep emacs expr find flex \
-	gcc gzip grep inews ksh less line lint ln lp lpr ls mail mailx \
-	make mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail \
+	gcc grep inews ksh less line lint ln lp lpr ls mail mailx make \
+	mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail sh \
 	shar sleep smail sort submit tail tar tbl test touch tr troff \
-	uname uniq uuname vi zcat zip
+	uname uniq uuname vi zcat
 ?V::pth loclist trylist
 ?F:./loc
 ?T:thisthing thing xxx dir file say _test
@@ -100,14 +96,10 @@ for dir in \$*; do
 	fi
 	;;
 	*)
-?X:	Be careful in case thing includes wildcards that might expand to multiple
-?X:	files.  Choose the last one.  This happens when searching for shared
-?X:	libraries with version numbers.  How to choose which one we want is
-?X:	probably an insoluble problem, in general.
-?X:	Some folks leave things like libc.so.orig around w/o read
-?X:	permission.  A -r test would handle that, but since ./loc is
-?X:	also used to find executables (which are installed w/o read
-?X:	permission on SCO ODT 3.0, we can't include the -r test.
+?X: Be careful in case thing includes wildcards that might expand to multiple
+?X: files.  Choose the last one.  This happens when searching for shared
+?X: libraries with version numbers.  How to choose which one we want is
+?X: probably an insoluble problem, in general.
 	for thisthing in \$dir/\$thing; do
 		: just loop through to pick last item
 	done
@@ -139,6 +131,7 @@ loclist="
 ?expr:expr
 ?find:find
 ?grep:grep
+?ln:ln
 ?ls:ls
 ?make:make
 ?mkdir:mkdir
@@ -154,7 +147,6 @@ loclist="
 "
 trylist="
 ?Mcc:Mcc
-?ar:ar
 ?bash:bash
 ?bison:bison
 ?byacc:byacc
@@ -167,13 +159,11 @@ trylist="
 ?emacs:emacs
 ?flex:flex
 ?gcc:gcc
-?gzip:gzip
 ?inews:inews
 ?ksh:ksh
 ?less:less
 ?line:line
 ?lint:lint
-?ln:ln
 ?lp:lp
 ?lpr:lpr
 ?mail:mail
@@ -186,6 +176,7 @@ trylist="
 ?pr:pr
 ?rmail:rmail
 ?sendmail:sendmail
+?sh:sh
 ?shar:shar
 ?smail:smail
 ?submit:submit
@@ -197,37 +188,17 @@ trylist="
 ?uuname:uuname
 ?vi:vi
 ?zcat:zcat
-?zip:zip
 "
-?LINT:set Loc Mcc awk ar bash bison byacc cat chgrp chmod chown \
+?LINT:set Loc Mcc awk bash bison byacc cat chgrp chmod chown \
 	comm compress cp cpio cpp csh date echo egrep emacs expr find flex \
-	gcc gzip grep inews ksh less line lint ln lp lpr ls mail mailx \
-	make mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail \
+	gcc grep inews ksh less line lint ln lp lpr ls mail mailx make \
+	mkdir more mv nroff perl pg pmake pr rm rmail sed sendmail sh \
 	shar sleep smail sort submit tail tar tbl test touch tr troff \
-	uname uniq uuname vi zcat zip
+	uname uniq uuname vi zcat
 pth=`echo $PATH | sed -e "s/$p_/ /g"`
 pth="$pth /lib /usr/lib"
 for file in $loclist; do
-?X:
-?X: Allow them to -Dmake=pmake on the command line for instance...
-?X: If the file is not fully qualified, as in -Dmake=pmake, then we
-?X: look the for the specified command (pmake here). If they say
-?X: -Dmake=/sbin/make for instance, then we make sure the file
-?X: exists, or we die...
-?X:
-	eval xxx=\$$file
-	case "$xxx" in
-	/*|?:[\\/]*)
-		if test -f "$xxx"; then
-			: ok
-		else
-			echo "WARNING: no $xxx -- ignoring your setting for $file." >&4
-			xxx=`./loc $file $file $pth`
-		fi
-		;;
-	'') xxx=`./loc $file $file $pth`;;
-	*) xxx=`./loc $xxx $xxx $pth`;;
-	esac
+	xxx=`./loc $file $file $pth`
 	eval $file=$xxx
 	eval _$file=$xxx
 	case "$xxx" in
@@ -239,8 +210,8 @@ for file in $loclist; do
 		echo $file is in $xxx.
 		;;
 	*)
-		echo "I don't know where '$file' is, and my life depends on it." >&4
-		echo "Go find a public domain implementation or fix your PATH setting!" >&4
+		echo "I don't know where '$file' is, and my life depends on it."
+		echo "Go find a public domain implementation or fix your PATH setting!"
 		exit 1
 		;;
 	esac
@@ -249,20 +220,7 @@ echo " "
 echo "Don't worry if any of the following aren't found..."
 say=offhand
 for file in $trylist; do
-?X: Allow them to -Dmake=pmake on the command line for instance (see above)
-	eval xxx=\$$file
-	case "$xxx" in
-	/*|?:[\\/]*)
-		if test -f "$xxx"; then
-			: ok
-		else
-			echo "WARNING: no $xxx -- ignoring your setting for $file." >&4
-			xxx=`./loc $file $file $pth`
-		fi
-		;;
-	'') xxx=`./loc $file $file $pth`;;
-	*) xxx=`./loc $xxx $xxx $pth`;;
-	esac
+	xxx=`./loc $file $file $pth`
 	eval $file=$xxx
 	eval _$file=$xxx
 	case "$xxx" in
@@ -285,14 +243,6 @@ egrep)
 	egrep=$grep
 	;;
 esac
-@if ln
-case "$ln" in
-ln)
-	echo "Substituting cp for ln."
-	ln=$cp
-	;;
-esac
-@end
 case "$test" in
 test)
 	echo "Hopefully test is built into your sh."

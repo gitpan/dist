@@ -20,7 +20,7 @@ $spitshell >metaxref.$manext <<!GROK!THIS!
 .TH METAXREF $manext "Version $VERSION PL$PATCHLEVEL"
 ''' @(#) Manual page for metaxref
 '''
-''' $Id: mxref.SH,v 3.0.1.4 1997/02/28 16:30:39 ram Exp $
+''' $Id: mxref.SH,v 3.0.1.3 1994/10/29 16:34:26 ram Exp $
 '''
 '''  Copyright (c) 1991-1993, Raphael Manfredi
 '''  
@@ -31,9 +31,6 @@ $spitshell >metaxref.$manext <<!GROK!THIS!
 '''  of the source tree for dist 3.0.
 '''
 ''' $Log: mxref.SH,v $
-''' Revision 3.0.1.4  1997/02/28  16:30:39  ram
-''' patch61: new -L option to match metaconfig and metalint
-'''
 ''' Revision 3.0.1.3  1994/10/29  16:34:26  ram
 ''' patch36: the leading .TH was referring to metaconfig
 '''
@@ -51,8 +48,7 @@ $spitshell >metaxref.$manext <<!GROK!THIS!
 metaxref \- builds cross-reference file/unit/item information
 .SH SYNOPSIS
 .B metaxref
-[ \-\fBdhkmsV\fR ] [ \fB\-f\fI manifest\fR ]
-[ \-\fBL \fIdir\fR ]
+[ \-\fBdhkmsV\fR ] [ \-\Bf\fI manifest\fR ]
 .SH DESCRIPTION
 .I Metaxref
 is a program that scans all the files in your MANIFEST file and produces
@@ -92,10 +88,6 @@ symbol lookup time in your source files, at the expense of memory usage.
 .TP
 .B \-s
 Turn on silent mode.
-.TP
-.B \-L\fI dir\fR
-Override default library location (where the \fIU\fR units directory
-can be found).
 .TP
 .B \-V
 Print version number and exit.

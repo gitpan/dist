@@ -20,7 +20,7 @@ $startperl
 	eval "exec perl -S \$0 \$*"
 		if \$running_under_some_shell;
 
-# $Id: patnotify.SH,v 3.0.1.9 1997/02/28 16:33:35 ram Exp $
+# $Id: patnotify.SH,v 3.0.1.8 1995/09/25 09:21:43 ram Exp $
 #
 #  Copyright (c) 1991-1993, Raphael Manfredi
 #  
@@ -31,9 +31,6 @@ $startperl
 #  of the source tree for dist 3.0.
 #
 # $Log: patnotify.SH,v $
-# Revision 3.0.1.9  1997/02/28  16:33:35  ram
-# patch61: let them know the patch priority and description
-#
 # Revision 3.0.1.8  1995/09/25  09:21:43  ram
 # patch59: now tells users how to directly request for mailed patches
 #
@@ -127,39 +124,14 @@ $have = $missing == 1 ? 'has' : 'have';
 $patlist = "$lastpat-";		# They'll get everything up to the end
 
 ($Patches = $patches) =~ s/^p/P/;
+
 $opt = ($mailer =~ /sendmail/) ? '-odq' : '';
-
-chdir 'bugs' || die "$progname: can't cd to bugs: $!\n";
-
-# Find out priority of last patch set
-$priority = 'UNKNOWN';
-open(PATCH, "patch$lastpat") ||
-	die "$progname: can't open patch #$lastpat: $!\n";
-while (<PATCH>) {
-	/^Priority:\s*(\S+)\s*$/ && ($priority = $1);
-}
-close PATCH;
-
-# Look for the .clog<patch #> description and prepare the patch description
-# for inclusion in the notification, so that they can figure out whether
-# they really need that patch set.
-
-if (-f ".clog$lastpat") {
-	open(LOGS, ".clog$lastpat") ||
-		die "$progname: can't open .clog$lastpat: $!\n";
-	$_ = <LOGS> . <LOGS> . <LOGS>;	# Skip first three lines
-	$clog = '';
-	while (<LOGS>) {
-		$clog .= $_;
-	}
-	close LOGS;
-} else {
-	warn "$progname: missing last .clog file in bugs directory\n";
-}
 
 print "$progname: sending notification of $missing new $patches to $dest...\n";
 
 fork && exit;
+
+chdir 'bugs' || die "$progname: can't cd to bugs: $!\n";
 
 # I hate broken mailers! Bust it up into smaller groups of people...
 @dest = split(' ', $dest);
@@ -179,7 +151,7 @@ This is just a quick note to let you know that $package version $baserev
 has been recently upgraded and that $patches $through $have been released.
 
 If you are actively using $package, I strongly suggest you upgrade by
-applying $these $patches, whose priority is $priority.
+applying $these $patches.
 
 You can fetch $these $patches automatically by sending me the following mail:
 
@@ -196,14 +168,7 @@ please send me the following mail:
 
 	Subject: Command
 	\@SH package - $package $baserev
-";
-	print MAILER
-"
-Following is the $patches description:
 
-$clog" if $clog;
-	print MAILER
-"
 -- $progname speaking for $maintname <$maintloc>.
 ";
 	close MAILER;

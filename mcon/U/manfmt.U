@@ -1,4 +1,4 @@
-?RCS: $Id: manfmt.U,v 3.0.1.5 1997/02/28 16:11:57 ram Exp $
+?RCS: $Id: manfmt.U,v 3.0.1.4 1995/09/25 09:16:52 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: manfmt.U,v $
-?RCS: Revision 3.0.1.5  1997/02/28  16:11:57  ram
-?RCS: patch61: don't ask for AFS when they choose to not install pages
-?RCS:
 ?RCS: Revision 3.0.1.4  1995/09/25  09:16:52  ram
 ?RCS: patch59: unit is now forced to the top of Configure, if possible
 ?RCS:
@@ -29,7 +26,7 @@
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
 ?MAKE:manfmt manfmtexp installmanfmt: Getfile Loc Oldconfig cat manext \
-	spackage Prefixit prefixexp Prefixup afs test
+	spackage Prefixit prefixexp Prefixup afs
 ?MAKE:	-pick add $@ %<
 ?Y:TOP
 ?S:manfmt:
@@ -84,7 +81,7 @@ if test "X$manfmtexp" != "X$ansexp"; then
 fi
 manfmt="$ans"
 manfmtexp="$ansexp"
-if $afs && $test "$manfmt"; then
+if $afs; then
 	$cat <<EOM
 
 Since you are running AFS, I need to distinguish the directory in which

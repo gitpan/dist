@@ -1,12 +1,12 @@
 ;########################################################################
 ;# Jmake rules for building libraries, programs, scripts, and data files
-;# $Id: Jmake.rules,v 3.0.1.6 1997/02/28 14:56:01 ram Exp $
+;# $Id: Jmake.rules,v 3.0.1.5 1995/09/25 09:07:19 ram Exp $
 
 /*
  *		   MACHINE-INDEPENDENT RULES -- DO NOT MODIFY
  */
 
-/* $Id: Jmake.rules,v 3.0.1.6 1997/02/28 14:56:01 ram Exp $
+/* $Id: Jmake.rules,v 3.0.1.5 1995/09/25 09:07:19 ram Exp $
  *
  *  Copyright (c) 1991-1993, Raphael Manfredi
  *  
@@ -17,10 +17,6 @@
  *  of the source tree for dist 3.0.
  *
  * $Log: Jmake.rules,v $
- * Revision 3.0.1.6  1997/02/28  14:56:01  ram
- * patch61: now handles USRINC for dependencies
- * patch61: smarter about dependencies computation
- *
  * Revision 3.0.1.5  1995/09/25  09:07:19  ram
  * patch59: smarter sed command to strip /usr/include dependencies
  *
@@ -293,9 +289,8 @@ deinstall.man::				@@\
 >INSTALL @!\
 >RM @!\
 install:: lib^^libname.a	@@\
-	$(INSTALL) -c -m 644 lib^^libname.a dest		@@\
-	$(RANLIB) dest/lib^^libname.a	@@\
-	chmod 444 dest/lib^^libnane.a	@!\
+	$(INSTALL) -c -m 444 lib^^libname.a dest		@@\
+	$(RANLIB) dest/lib^^libname.a	@!\
 							@!\
 deinstall::					@@\
 	$(RM) dest/lib^^libname.a
@@ -598,16 +593,13 @@ TOPDIR/mkdep:						@!\
 >MKDEP @!\
 >SED @!\
 >RM @!\
-+USRINC = $usrinc @!\
 |once _DependTarget_				@!\
 DependDependency()					@!\
 									@!\
 depend::							@@\
 	($(SED) '/^# DO NOT DELETE/q' Makefile && \ @@\
 	$(MKDEP) $(SOURCES) | \			@@\
-	$(SED) -e 's:/usr/include[^ ]*::g; s:$(USRINC)[^ ]*::g; ' \ @@\
-		-e '/: / b print' -e 'H; d; n; : print' -e 'x; s/\\\n//g' \ @@\
-		-e 's/ ^^ */ /g; s/ :/:/;' -e '/: *$$/d' \ @@\
+	$(SED) -e 's/: \.\//: /; s/\/usr\/include[^ ]*//g' -e '/: *$$/d' \ @@\
 	) > Makefile.new				@@\
 	cp Makefile Makefile.bak		@@\
 	cp Makefile.new Makefile		@@\

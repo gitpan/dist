@@ -1,4 +1,4 @@
-?RCS: $Id: libnm.U,v 3.0.1.1 1997/02/28 16:08:26 ram Exp $
+?RCS: $Id: libnm.U,v 3.0 1993/08/18 12:09:01 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,13 +9,10 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: libnm.U,v $
-?RCS: Revision 3.0.1.1  1997/02/28  16:08:26  ram
-?RCS: patch61: replaced .a with $_a all over the place
-?RCS:
 ?RCS: Revision 3.0  1993/08/18  12:09:01  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:libnm: test Loc libpth _a
+?MAKE:libnm: test Loc libpth
 ?MAKE:	-pick add $@ %<
 ?S:libnm:
 ?S:	This variable contains the argument to pass to the loader in order
@@ -26,11 +23,11 @@
 ?O: use libswanted='-lnm' instead (see libs.U).
 : see if we should include -lnm
 echo " "
-if $test -r /usr/lib/libnm$_a || $test -r /usr/local/lib/libnm$_a ; then
+if $test -r /usr/lib/libnm.a || $test -r /usr/local/lib/libnm.a ; then
 	echo "New math library found." >&4
 	libnm='-lnm'
 else
-	ans=`./loc libnm$_a x $libpth`
+	ans=`./loc libnm.a x $libpth`
 	case "$ans" in
 	x)
 		echo "No nm library found--the normal math library will have to do." >&4

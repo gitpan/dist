@@ -1,4 +1,4 @@
-?RCS: $Id: Instruct.U,v 3.0.1.3 1997/02/28 15:02:55 ram Exp $
+?RCS: $Id: Instruct.U,v 3.0.1.2 1995/02/15 14:11:34 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Instruct.U,v $
-?RCS: Revision 3.0.1.3  1997/02/28  15:02:55  ram
-?RCS: patch61: logname / whoami sequence rewritten to use case
-?RCS:
 ?RCS: Revision 3.0.1.2  1995/02/15  14:11:34  ram
 ?RCS: patch51: author name now appears at the end of the paragraph (WED)
 ?RCS:
@@ -33,10 +30,8 @@
 : general instructions
 needman=true
 firsttime=true
-user=`(logname) 2>/dev/null`
-case "$user" in
-'') user=`whoami 2>&1`;;
-esac
+?X: need space for ksh--see cf_who.U
+user=`( (logname) 2>/dev/null || whoami) 2>&1`
 if $contains "^$user\$" ../.config/instruct >/dev/null 2>&1; then
 	firsttime=false
 	echo " "

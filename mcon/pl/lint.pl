@@ -1,4 +1,4 @@
-;# $Id: lint.pl,v 3.0.1.10 1997/02/28 16:31:53 ram Exp $
+;# $Id: lint.pl,v 3.0.1.9 1995/09/25 09:19:15 ram Exp $
 ;#
 ;#  Copyright (c) 1991-1993, Raphael Manfredi
 ;#  
@@ -9,10 +9,6 @@
 ;#  of the source tree for dist 3.0.
 ;#
 ;# $Log: lint.pl,v $
-;# Revision 3.0.1.10  1997/02/28  16:31:53  ram
-;# patch61: added support for ?F: lines to monitor file usage
-;# patch61: now honours "create" and "empty" lint directives
-;#
 ;# Revision 3.0.1.9  1995/09/25  09:19:15  ram
 ;# patch59: new ?Y: directive to change unit layout
 ;#
@@ -77,13 +73,11 @@ sub init_extraction {
 	%lintchange = ();			# Symbols declared changed by a ?LINT: line
 	%lintuse = ();				# Symbols declared used by unit
 	%lintextern = ();			# Symbols known to be externally defined
-	%lintcreated = ();			# Files declared as created by a ?LINT: line
 	%condsym = ();				# Records all the conditional symbols
 	%condseen = ();				# Records conditional dependencies
 	%depseen = ();				# Records full dependencies
 	%shvisible = ();			# Records units making a symbol visible
 	%shspecial = ();			# Records special units listed as wanted
-	%shdepend = ();				# Records units listed in one's dependency list
 	%shmaster = ();				# List of units defining a shell symbol
 	%cmaster = ();				# List of units defining a C symbol
 	%symdep = ();				# Records units where symbol is a dependency
@@ -119,7 +113,6 @@ sub p_make {
 	undef %lintseen;
 	undef %lintchange;
 	undef %lintextern;
-	undef %lintcreated;
 	undef %fileseen;
 	undef %filetmp;
 	undef %filecreated;
@@ -138,7 +131,7 @@ sub p_make {
 
 		# We record for each shell symbol the list of units which claim to make
 		# it, so as to report duplicates.
-		if ($sym =~ /^[_a-z]/ || $Except{$sym}) {
+		if ($sym =~ /^[a-z]/ || $Except{$sym}) {
 			$shmaster{"\$$sym"} .= "$unit ";
 			++$defseen{$sym};
 		} else {
@@ -149,7 +142,7 @@ sub p_make {
 	# Record dependencies for later perusal
 	push(@make, join(' ', @ary) . ':' . join(' ', @dep));
 	foreach $sym (@dep) {
-		if ($sym =~ /^\+[_A-Za-z]/) {
+		if ($sym =~ /^\+[A-Za-z]/) {
 			$sym =~ s|^\+||;
 			++$condseen{$sym};		# Conditional symbol wanted
 			++$condsym{$sym};		# %condsym has a greater lifetime
@@ -162,9 +155,6 @@ sub p_make {
 		# as "undefined". For instance, Myread exports $dflt, $ans and $rp.
 		$shspecial{$unit} .= "$sym " if substr($sym, 0, 1) =~ /^[A-Z]/;
 
-		# Record all known dependencies (special or not) for this unit
-		$shdepend{$unit} .= "$sym ";
-
 		# Remember where wanted symbol is defined, so that we can report
 		# stale dependencies later on (i.e. dependencies which refer to non-
 		# existent symbols).
@@ -173,7 +163,7 @@ sub p_make {
 	# Make sure we do not want a symbol twice, nor do we want it once as a full
 	# dependency and once as a conditional dependency.
 	foreach $sym (@dep) {
-		if ($sym =~ /^\+[_A-Za-z]/) {
+		if ($sym =~ /^\+[A-Za-z]/) {
 			$sym =~ s|^\+||;
 			warn "$where: '+$sym' is listed $condseen{$sym} times.\n"
 				if $condseen{$sym} > 1;
@@ -461,7 +451,7 @@ sub p_file {
 		$prodfile{$file} .= "$unit " if $fileseen{$file} == 1;
 		($uufile = $file) =~ s|^\./(\S+)$|$1|;
 		next if $file eq $uufile;	# Don't care about non-UU files
-		unless (substr($unit, 0, 1) =~ /^[A-Z]/ || $lintcreated{$uufile}) {
+		unless (substr($unit, 0, 1) =~ /^[A-Z]/) {
 			warn "$where: UU file '$uufile' in non-special unit ignored.\n";
 			next;
 		}
@@ -484,11 +474,6 @@ sub p_lint {
 		@sym = split(' ', $_);
 		foreach (@sym) {
 			$ssym{$_}++;			# Shell variable described
-		}
-	} elsif (s/^creat\w+//) {		# Listed created files in regular units
-		@sym = split(' ', $_);
-		foreach (@sym) {
-			$lintcreated{$_}++;		# Persistent UU file created
 		}
 	} elsif (s/^known//) {			# Listed C variables are described
 		@sym = split(' ', $_);
@@ -515,12 +500,6 @@ sub p_lint {
 		foreach (@sym) {
 			$lintseen{$_}++;		# Shell variable defined in this unit
 		}
-	} elsif (m/^empty/) {			# Empty unit file
-		$lintempty{$unit}++;
-	} else {
-		local($where) = "\"$file\", line $." unless $where;
-		local($word) = /^(\w+)/;
-		warn "$where: unknown LINT request '$word' ignored.\n";
 	}
 }
 
@@ -568,14 +547,9 @@ sub p_body {
 		warn "$where: $@" unless $what;
 		return;
 	}
-
-	# From now on, do all substitutes with ':' since it would be dangerous
-	# to remove things plain and simple. It could yields false matches
-	# afterwards...
-
 	# Record any attempt made to set a shell variable
 	local($sym);
-	while (s/(\w+)=/:/) {
+	while (s/(\w+)=//) {
 		$sym = $1;
 		next if $sym =~ /^\d+/;		# Ignore $1 and friends
 		$symset{$sym}++;			# Shell variable set
@@ -594,54 +568,46 @@ sub p_body {
 	# Now look at the shell variables used: can be $var or ${var}
 	local($var);
 	local($line) = $_;
-	while (s/\$\{?(\w+)\}?/:/) {
+	while (s/\$\{?(\w+)\}?//) {
 		$var = $1;
 		next if $var =~ /^\d+/;		# Ignore $1 and friends
 		# Record variable as undeclared but do not issue a message right now.
 		# That variable could be exported via ?V: (as $dflt in Myread) or be
 		# defined by a special unit (like $inlibc by unit Inlibc).
 		$shunknown{$unit} .= "$var " unless
-			$lintextern{$var} || &declared($var) ||
-			$shunknown{$unit} =~ /\b$var\b/;
+			&declared($var) || $shunknown{$unit} =~ /\b$var\b/;
 		$shused{$unit} .= "\$$var " unless $shused{$unit} =~ /\$$var\b/;
 	}
 	# Now look at private files used by the unit (./file or ..../UU/file)
 	# We look at things like '. ./myread' and `./loc ...` only.
 	local($file);
 	$_ = $line;
-	while (
-		s!(\.\s+|`\s*)(\S*UU|\.)/([^\$/`\s;]+)\s*!! ||
-		s!(`\s*\$?)cat\s+(\./)?([^\$/`\s;]+)\s*`!! ||
-		s!if(\s+)(\./)([^\$/`\s;]+)\s*!!
-	) {
+	while (s!(\.\s+|`\s*)(\S*UU|\.)/([^\$/`\s;]+)\s*!!) {
 		$file = $3;
-		# Found some ". ./file" or `./file` execution, `$cat file`, "if prog"...
 		# Record file as used. Later on, we will make sure we had the right
 		# to use that file: either we are in the unit that defines it, or we
 		# include the unit that creates it in our dependencies, relying on ?F:.
 		$fileused{$unit} .= "$file " unless
 			$filetmp{$file} || $fileused{$unit} =~ /\b$file\b/;
 		# Mark temporary file as being used, to spot useless local declarations
-		$filetmp{$file} .= ' used'
-			if defined $filetmp{$file} && $filetmp{$file} !~ /\bused/;
+		$filetmp{$file} = 'used' if defined $filetmp{$file};
 	}
 	# Try to detect things like . myread or `loc` to warn that they
 	# should rather use . ./myread and `./loc`. Also things like 'if prog',
 	# or usage in conditional expressions such as || and &&. Be sure the file
 	# name is always in $2...
 	while (
-		s!(\.\s+|`\s*)([^\$/`\s;]+)\s*!:!	||	# . myread or `loc`
-		s!(if|\|\||&&)\s+([^\$/`\s;]+)\s*!:!	# if prog, || prog, && prog
+		s!(\.\s+|`\s*)([^\$/`\s;]+)\s*!!	||	# . myread or `loc`
+		s!(if|\|\||&&)\s+([^\$/`\s;]+)\s*!!		# if prog, || prog, && prog
 	) {
 		$file = $2;
 		$filemisused{$unit} .= "$file " unless
 			$filetmp{$file} || $filemisused{$unit} =~ /\b$file\b/;
 		# Temporary files should be used with ./ anyway
-		$filetmp{$file} .= ' misused'
-			if defined $filetmp{$file} && $filetmp{$file} !~ /\bmisused/;
+		$filetmp{$file} = 'misused' if defined $filetmp{$file};
 	}
 	# Locate file creation, >>file or >file
-	while (s!>>?\s*([^\$/`\s;]+)\s*!:!) {
+	while (s!>>?\s*([^\$/`\s;]+)\s*!!) {
 		$file = $1;
 		next if $file =~ /&\d+/;	# skip >&4 and friends
 		$filecreated{$file}++;
@@ -653,8 +619,7 @@ sub p_end {
 	local($last) = @_;				# Last processed line
 	local($where) = "\"$file\"";
 	unless ($makeseen{$unit}) {
-		warn "$where: no ?MAKE: line describing dependencies.\n"
-			unless $lintempty{$unit};
+		warn "$where: no ?MAKE: line describing dependencies.\n";
 		return;
 	}
 
@@ -713,10 +678,10 @@ sub p_end {
 	}
 	# Idem for local files
 	foreach $file (sort keys %filetmp) {
-		warn "$where: mis-used temporary file '$file'.\n" if
-			$filetmp{$file} =~ /\bmisused/;
 		warn "$where: unused temporary file '$file'.\n" unless
-			$filetmp{$file} =~ /\bused/ || $filetmp{$file} =~ /\bmisused/;
+			$filetmp{$file} =~ /used/;
+		warn "$where: mis-used temporary file '$file'.\n" if
+			$filetmp{$file} eq 'misused';
 	}
 	# Make sure each private file listed as created on ?F: is really created.
 	# When found, a private UU file is entered in the %filecreated array
@@ -786,19 +751,13 @@ sub sanity_checks {
 			$defined = 0;
 			$where = $filemaster{$file};		# Where file is created
 			$defined = 1 if $unit eq $where;	# We're in the unit defining it
-			# Private UU files may be only be created by special units
+			# Private UU files may only be created in special units
 			foreach $special (split(' ', $shspecial{$unit})) {
 				last if $defined;
-				$defined = 1 if $where eq $special;
-			}
-			# Exceptions to above rule possible via a ?LINT:create hint,
-			# so parse all known dependencies for the unit...
-			foreach $depend (split(' ', $shdepend{$unit})) {
-				last if $defined;
-				$defined = 1 if $where eq $depend;
+				$defined = 1 if $where eq $special
 			}
 			$message{$unit} .= "\@$file " unless
-				$defined || $said{"$unit/$file"}++;	# Unknown file
+				$defined || $said{$file}++;		# Unknown file
 		}
 	}
 	undef %fileused;

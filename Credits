@@ -96,17 +96,3 @@ bugs and giving me some suggestions (sorted on the first name):
 Due to a mistake of mine, changes from Wayne Davison were flagged 'WAD',
 but his middle initial being an 'E', new ones are now flagged as 'WED'.
 Sorry Wayne, I did not know. We don't use middle initials here in Europe.
-
-Special thanks to the perl5 Patch Pumpkin Holders (in chronological order):
-
-	Andy Dougherty <andy@crystal.phys.lafayette.edu>
-	Chip Salzenberg <chip@atlantic.net>
-
-for their wonderful creativity. Perl5 is by far the largest metaconfig
-customer with the widest audience, so Configure got run on a variety
-of new platforms requiring specific fixes... which they provided,
-thereby greatly enhancing the metaconfig "portability database".
-
-	Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>
-	Grenoble, France, February 1997
-

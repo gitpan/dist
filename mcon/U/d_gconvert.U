@@ -1,4 +1,4 @@
-?RCS: $Id: d_gconvert.U,v 3.0.1.3 1997/02/28 15:33:38 ram Exp $
+?RCS: $Id: d_gconvert.U,v 3.0.1.2 1995/07/25 13:55:59 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -11,9 +11,6 @@
 ?RCS: Original Author: Andy Dougherty <doughera@lafcol.lafayette.edu>
 ?RCS:
 ?RCS: $Log: d_gconvert.U,v $
-?RCS: Revision 3.0.1.3  1997/02/28  15:33:38  ram
-?RCS: patch61: integrated new unit from perl5
-?RCS:
 ?RCS: Revision 3.0.1.2  1995/07/25  13:55:59  ram
 ?RCS: patch56: improved comments about the Gconvert macro (ADO)
 ?RCS: patch56: force compile-link test since it may exist but be unusable (ADO)
@@ -21,7 +18,7 @@
 ?RCS: Revision 3.0.1.1  1994/10/29  16:12:51  ram
 ?RCS: patch36: created by ADO
 ?RCS:
-?MAKE:d_Gconvert: cat cc ccflags ldflags libs Inlibc rm _o
+?MAKE:d_Gconvert: cat cc ccflags ldflags libs Inlibc rm runnm
 ?MAKE:	-pick add $@ %<
 ?S:d_Gconvert:
 ?S:	This variable holds what Gconvert is defined as to convert
@@ -45,103 +42,69 @@
 ?C:.
 ?H:#define Gconvert(x,n,t,b) $d_Gconvert
 ?H:.
-?T: xxx_list xxx_convert
-?F:!try
-?X: 
-: Check how to convert floats to strings.
-echo " "
-echo "Checking for an efficient way to convert floats to strings."
-?X: We want to be sure to drop trailing decimal points (perl5
-?X: needs this).
-$cat >try.c <<'EOP'
-#ifdef TRY_gconvert
-#define Gconvert(x,n,t,b) gconvert((x),(n),(t),(b))
-char *myname = "gconvert";
-#endif
-#ifdef TRY_gcvt
-#define Gconvert(x,n,t,b) gcvt((x),(n),(b))
-char *myname = "gcvt";
-#endif
-#ifdef TRY_sprintf
-#define Gconvert(x,n,t,b) sprintf((b),"%.*g",(n),(x))
-char *myname = "sprintf";
-#endif
+?X: We don't permanently change runnm, but we do temporarily.
+?LINT: change runnm
+?T: d_gconvert d_gcvt xxx_runnm
+: see if gconvert exists
+?X: On some SVR4 systems, gconvert is present but can not be used 
+?X: because it requires some other unavailable functions.
+?X: Therefore, do not use the nm extraction, but use a real compile
+?X: and link test instead.
+xxx_runnm="$runnm"
+runnm=false
+set gconvert d_gconvert
+eval $inlibc
+runnm="$xxx_runnm"
 
-#include <stdio.h>
+case "$d_gconvert" in
+$define)
+	echo "We'll use it to convert floats into a string then." >&4
+	d_Gconvert="gconvert((x),(n),(t),(b))"
+	;;
+*)
+	: Maybe we can emulate it with gcvt.
+	set gcvt d_gcvt
+	eval $inlibc
 
-int
-checkit(expect, got)
-char *expect;
-char *got;
-{
-    if (strcmp(expect, got)) {
-		printf("%s oddity:  Expected %s, got %s\n",
-			myname, expect, got);
-		exit(1);
-	}
-}
-
-int
-main()
-{ 
+	case "$d_gcvt" in
+	$define) 
+		: Test whether gcvt drops a trailing decimal point
+		$cat >try.c <<'EOP'
+main() { 
 	char buf[64]; 
-	buf[63] = '\0';
-
-	/* This must be 1st test on (which?) platform */
-	/* Alan Burlison <AlanBurlsin@unn.unisys.com> */
-	Gconvert(0.1, 8, 0, buf);
-	checkit("0.1", buf);
-
-	Gconvert(1.0, 8, 0, buf); 
-	checkit("1", buf);
-
-	Gconvert(0.0, 8, 0, buf); 
-	checkit("0", buf);
-
-	Gconvert(-1.0, 8, 0, buf); 
-	checkit("-1", buf);
-
-	/* Some Linux gcvt's give 1.e+5 here. */
-	Gconvert(100000.0, 8, 0, buf); 
-	checkit("100000", buf);
-	
-	/* Some Linux gcvt's give -1.e+5 here. */
-	Gconvert(-100000.0, 8, 0, buf); 
-	checkit("-100000", buf);
-
+	gcvt(1.0, 8, buf); 
+	if (buf[0] != '1' || buf[1] != '\0')
+		exit(1);
+	gcvt(0.0, 8, buf); 
+	if (buf[0] != '0' || buf[1] != '\0')
+		exit(1);
+	gcvt(-1.0, 8, buf); 
+	if (buf[0] != '-' || buf[1] != '1' || buf[2] != '\0')
+		exit(1);
 	exit(0);
 }
 EOP
-?X: List of order in which to search for functions.
-?X: Usual order of efficiency is gconvert gcvt sprintf
-?X: Respect a previous or hinted value.
-case "$d_Gconvert" in
-gconvert*) xxx_list='gconvert gcvt sprintf' ;;
-gcvt*) xxx_list='gcvt gconvert sprintf' ;;
-sprintf*) xxx_list='sprintf gconvert gcvt' ;;
-*) xxx_list='gconvert gcvt sprintf' ;;
-esac
-
-for xxx_convert in $xxx_list; do
-	echo "Trying $xxx_convert"
-	$rm -f try try$_o
-	if $cc $ccflags -DTRY_$xxx_convert $ldflags -o try \
-		try.c $libs > /dev/null 2>&1 ; then
-		echo "$xxx_convert" found. >&4
-		if ./try; then
-			echo "I'll use $xxx_convert to convert floats into a string." >&4
-			break;
+		if $cc $ccflags $ldflags -o try try.c $libs > /dev/null 2>&1; then
+			if ./try; then
+				echo "Good, your gcvt() drops a trailing decimal point."
+				echo "We'll use it to convert floats into a string." >&4
+				d_Gconvert="gcvt((x),(n),(b))"
+			else
+				echo "But your gcvt() keeps a trailing decimal point".
+				d_Gconvert=''
+			fi
 		else
-			echo "...But $xxx_convert didn't work as I expected."
+			echo "Hmm.  I can't compile the gcvt test program."
+			d_Gconvert=''
 		fi
-	else
-		echo "$xxx_convert NOT found." >&4
-	fi
-done
-		
-case "$xxx_convert" in
-gconvert) d_Gconvert='gconvert((x),(n),(t),(b))' ;;
-gcvt) d_Gconvert='gcvt((x),(n),(b))' ;;
-*) d_Gconvert='sprintf((b),"%.*g",(n),(x))' ;;
+		$rm -f try.c try
+		;;
+	esac
+	case "$d_Gconvert" in
+	'')
+		echo "I'll use sprintf instead to convert floats into a string." >&4
+		d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+		;;
+	esac
 esac
 

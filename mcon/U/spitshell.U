@@ -1,4 +1,4 @@
-?RCS: $Id: spitshell.U,v 3.0.1.4 1997/02/28 16:22:12 ram Exp $
+?RCS: $Id: spitshell.U,v 3.0.1.3 1995/01/11 15:37:01 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: spitshell.U,v $
-?RCS: Revision 3.0.1.4  1997/02/28  16:22:12  ram
-?RCS: patch61: removed useless chatter as this is now done very early
-?RCS:
 ?RCS: Revision 3.0.1.3  1995/01/11  15:37:01  ram
 ?RCS: patch45: use 'test -f' instead of 'test -r' for exec-only cat progs (WED)
 ?RCS: patch45: protected "sh -c" within backquotes for Linux and SGI
@@ -26,7 +23,7 @@
 ?RCS: Revision 3.0  1993/08/18  12:09:49  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:spitshell shsharp sharpbang: eunicefix sh
+?MAKE:spitshell shsharp sharpbang: eunicefix
 ?MAKE:	-pick add $@ %<
 ?S:spitshell:
 ?S:	This variable contains the command necessary to spit out a runnable
@@ -42,15 +39,14 @@
 ?S:.
 ?T:xcat
 : see if sh knows # comments
-?X: This is loaded up early, so avoid being chatty.
-?X: echo " "
-?X: echo "Checking your $sh to see if it knows about # comments..." >&2
-if `$sh -c '#' >/dev/null 2>&1`; then
-?X:	echo "Your $sh handles # comments correctly."
+echo " "
+echo "Checking your sh to see if it knows about # comments..." >&4
+if `sh -c '#' >/dev/null 2>&1`; then
+	echo "Your sh handles # comments correctly."
 	shsharp=true
 	spitshell=cat
-?X:	echo " "
-?X:	echo "Okay, let's see if #! works on this system..."
+	echo " "
+	echo "Okay, let's see if #! works on this system..."
 	xcat=/bin/cat
 	test -f $xcat || xcat=/usr/bin/cat
 	echo "#!$xcat" >try
@@ -58,7 +54,7 @@ if `$sh -c '#' >/dev/null 2>&1`; then
 	chmod +x try
 	./try > today
 	if test -s today; then
-?X:		echo "It does."
+		echo "It does."
 		sharpbang='#!'
 	else
 		echo "#! $xcat" > try
@@ -66,17 +62,15 @@ if `$sh -c '#' >/dev/null 2>&1`; then
 		chmod +x try
 		./try > today
 		if test -s today; then
-?X:			echo "It does."
+			echo "It does."
 			sharpbang='#! '
 		else
-?X:			echo "Okay, let's see if #! works on this system..."
-?X:			echo "It's just a comment."
+			echo "It's just a comment."
 			sharpbang=': use '
 		fi
 	fi
 else
-	echo " "
-	echo "Your $sh doesn't grok # comments--I will strip them later on."
+	echo "Your sh doesn't grok # comments--I will strip them later on."
 	shsharp=false
 ?X: The spitshell script will be perused, so leave it out the UU directory
 	cd ..

@@ -20,7 +20,7 @@ $startperl
 	eval "exec perl -S \$0 \$*"
 		if \$running_under_some_shell;
 
-# $Id: mxref.SH,v 3.0.1.3 1997/02/28 16:30:49 ram Exp $
+# $Id: mxref.SH,v 3.0.1.2 1994/01/24 14:21:04 ram Exp $
 #
 #  Copyright (c) 1991-1993, Raphael Manfredi
 #  
@@ -33,9 +33,6 @@ $startperl
 # Original Author: Harlan Stenn <harlan@mumps.pfcs.com>
 #
 # $Log: mxref.SH,v $
-# Revision 3.0.1.3  1997/02/28  16:30:49  ram
-# patch61: new -L option to match metaconfig and metalint
-#
 # Revision 3.0.1.2  1994/01/24  14:21:04  ram
 # patch16: added ~/.dist_profile awareness
 #
@@ -55,17 +52,16 @@ $startperl
 !GROK!THIS!
 
 $spitshell >>mxref <<'!NO!SUBS!'
-&profile;						# Read ~/.dist_profile
-require 'getopts.pl';
-&usage unless &Getopts("df:hkmsVL:");
-
 chop($date = `date`);
-chop($WD = `pwd`);				# Working directory
-$MC = $opt_L if $opt_L;			# May override  library path
 $MC = &tilda_expand($MC);		# ~name expansion
+chop($WD = `pwd`);				# Working directory
 chdir $MC || die "Can't chdir to $MC: $!\n";
 chop($MC = `pwd`);				# Real metaxref lib path (no symbolic links)
 chdir $WD || die "Can't chdir back to $WD: $!\n";
+
+&profile;						# Read ~/.dist_profile
+require 'getopts.pl';
+&usage unless &Getopts("df:hkmsV");
 
 if ($opt_V) {
 	print STDERR "metaxref $version PL$patchlevel\n";
@@ -117,14 +113,13 @@ sub init_except {
 # Print out metaxref's usage and exits
 sub usage {
 	print STDERR <<EOM;
-Usage: metaxref [-dhkmsV] [-f manifest] [-L dir]
+Usage: metaxref [-dhkmsV] [-f manifest]
   -d : debug mode.
   -f : use that file as manifest instead of MANIFEST.new.
   -h : print this help message and exits.
   -k : keep temporary directory.
   -m : assume lots of memory and swap space.
   -s : silent mode.
-  -L : specify main units repository.
   -V : print version number and exits.
 EOM
 	exit 1;

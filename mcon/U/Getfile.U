@@ -1,4 +1,4 @@
-?RCS: $Id: Getfile.U,v 3.0.1.7 1997/02/28 15:01:06 ram Exp $
+?RCS: $Id: Getfile.U,v 3.0.1.6 1995/02/15 14:11:00 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Getfile.U,v $
-?RCS: Revision 3.0.1.7  1997/02/28  15:01:06  ram
-?RCS: patch61: getfile script now begins with "startsh"
-?RCS:
 ?RCS: Revision 3.0.1.6  1995/02/15  14:11:00  ram
 ?RCS: patch51: was not working if ~'s allowed with d_portable on (WED)
 ?RCS:
@@ -79,7 +76,7 @@
 ?X: If the answer to the question is 'none', then the existence checks are
 ?X:	skipped and the empty string is returned.
 ?X:
-?MAKE:Getfile: d_portable contains startsh Myread Filexp
+?MAKE:Getfile: d_portable contains Myread Filexp
 ?MAKE:	-pick add $@ %<
 ?V:ansexp:fn
 ?F:./getfile
@@ -87,10 +84,7 @@
 	value exp_file nopath_ok loc_file
 ?LINT:change ans
 : now set up to get a file name
-cat <<EOS >getfile
-$startsh
-EOS
-cat <<'EOSC' >>getfile
+cat <<'EOSC' >getfile
 tilde=''
 fullpath=''
 already=''

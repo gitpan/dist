@@ -20,7 +20,7 @@ cat >packinit <<!GROK!THIS!
 	eval "exec perl -S \$0 \$*"
 		if \$running_under_some_shell;
 
-# $Id: packinit.SH,v 3.0.1.4 1997/02/28 14:55:14 ram Exp $
+# $Id: packinit.SH,v 3.0.1.3 1994/10/29 15:43:49 ram Exp $
 #
 #  Copyright (c) 1991-1993, Raphael Manfredi
 #  
@@ -31,9 +31,6 @@ cat >packinit <<!GROK!THIS!
 #  of the source tree for dist 3.0.
 #
 # $Log: packinit.SH,v $
-# Revision 3.0.1.4  1997/02/28  14:55:14  ram
-# patch61: fixed one wrong ':' comment in .package
-#
 # Revision 3.0.1.3  1994/10/29  15:43:49  ram
 # patch36: added support for user-defined C and shell file extensions
 # patch36: now asks whether a ChangeLog file is to be managed
@@ -405,7 +402,7 @@ open(PACKAGE, '>.package') || die "Can't create .package";
 chop($date = `date`);
 print PACKAGE <<EOF;
 : This file was created by running packinit on $date.
-: Do not hand edit -- run packinit again if changes are to be made.
+: Do not hand edit; run packinit again if changes are to be made.
 packver='$mypackver'
 : Basic variables
 package=$package

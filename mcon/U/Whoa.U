@@ -1,4 +1,4 @@
-?RCS: $Id: Whoa.U,v 3.0.1.2 1997/02/28 15:21:21 ram Exp $
+?RCS: $Id: Whoa.U,v 3.0.1.1 1994/10/29 16:02:01 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,9 +9,6 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Whoa.U,v $
-?RCS: Revision 3.0.1.2  1997/02/28  15:21:21  ram
-?RCS: patch61: whoa script now starts with leading "startsh"
-?RCS:
 ?RCS: Revision 3.0.1.1  1994/10/29  16:02:01  ram
 ?RCS: patch36: added ?F: line for metalint file checking
 ?RCS:
@@ -28,15 +25,12 @@
 ?X: $undef, but now $var is $define, after calling . whoa, you should use
 ?X: eval "$var=\$tu" to finally set $var to the correct value. See unit Inlibc.
 ?X: 
-?MAKE:Whoa: Myread startsh hint
+?MAKE:Whoa: Myread hint
 ?MAKE:	-pick add $@ %<
 ?F:./whoa
 ?T:var was td tu
 : set up the script used to warn in case of inconsistency
-cat <<EOS >whoa
-$startsh
-EOS
-cat <<'EOSC' >>whoa
+cat <<'EOSC' >whoa
 dflt=y
 echo " "
 echo "*** WHOA THERE!!! ***" >&4

@@ -20,7 +20,7 @@ $startperl
 	eval "exec perl -S \$0 \$*"
 		if \$running_under_some_shell;
 
-# $Id: patlog.SH,v 3.0.1.2 1997/02/28 16:33:03 ram Exp $
+# $Id: patlog.SH,v 3.0.1.1 1994/10/29 16:42:26 ram Exp $
 #
 #  Copyright (c) 1991-1993, Raphael Manfredi
 #  
@@ -31,9 +31,6 @@ $startperl
 #  of the source tree for dist 3.0.
 #
 # $Log: patlog.SH,v $
-# Revision 3.0.1.2  1997/02/28  16:33:03  ram
-# patch61: typo fix
-#
 # Revision 3.0.1.1  1994/10/29  16:42:26  ram
 # patch36: created
 #
@@ -165,7 +162,7 @@ EOM
 # the old behaviour where the description is edited directly from within
 # the generated patch.
 
-exit(0) if $changelog =~ /^\s*$/;
+exit(0) unless $changlog =~ /^\s*$/;
 
 system $editor, ".clog$bnum";
 
