@@ -1,4 +1,4 @@
-?RCS: $Id: Config_h.U,v 3.0.1.4 1995/09/25 09:10:49 ram Exp $
+?RCS: $Id: Config_h.U,v 3.0.1.5 1997/02/28 14:57:43 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Config_h.U,v $
+?RCS: Revision 3.0.1.5  1997/02/28  14:57:43  ram
+?RCS: patch61: added support for src.U
+?RCS:
 ?RCS: Revision 3.0.1.4  1995/09/25  09:10:49  ram
 ?RCS: patch59: commented the purpose of the #un-def directive
 ?RCS:
@@ -36,7 +39,7 @@
 ?X: the file. MS-DOG will not let you have two 'dots' because that would mean
 ?X: two "extensions".
 ?X: 
-?MAKE:Config_h: Id End Config_sh Obsol_h myuname cf_time cf_by
+?MAKE:Config_h: Id End Config_sh Obsol_h myuname cf_time cf_by package src
 ?MAKE:	-pick c_h_weed $@ %<
 ?MAKE:	-pick c_h_weed $@ ./Config_h
 ?MAKE:	-pick c_h_weed $@ ./Obsol_h
@@ -65,7 +68,17 @@ echo "Extracting config.h (with variable substitutions)"
 ?X: is provision here for #un-def, which is translated back into #undef after
 ?X: all original #undef have been processed.
 ?X:
-sed <<!GROK!THIS! >config.h -e 's!^#undef!/\*#define!' -e 's!^#un-def!#undef!'
+?X:	Previously, we changed all 
+?X:		#undef FOO /**/ 
+?X:	into
+?X:		/*#define FOO /**/ 
+?X:	The xlc compiler (available on IBM's AIX) complains that this is
+?X:	an illegal attempt to write a nested comment, and warns against it.
+?X:	There's apparently no way to shut the compiler up, either.
+?X:	This sed command from Hallvard B Furuseth <h.b.furuseth@usit.uio.no>
+?X:	changes it to
+?X:		/*#define FOO / **/ 
+sed <<!GROK!THIS! >config.h -e 's!^#undef\(.*/\)\*!/\*#define\1 \*!' -e 's!^#un-def!#undef!'
 /*
  * This file was produced by running the config_h.SH script, which
  * gets its values from config.sh, which is generally produced by
@@ -75,12 +88,15 @@ sed <<!GROK!THIS! >config.h -e 's!^#undef!/\*#define!' -e 's!^#un-def!#undef!'
  * that running config_h.SH again will wipe out any changes you've made.
  * For a more permanent change edit config.sh and rerun config_h.SH.
  *
- * \$Id: Config_h.U,v 3.0.1.4 1995/09/25 09:10:49 ram Exp $
+ * \$Id: Config_h.U,v 3.0.1.5 1997/02/28 14:57:43 ram Exp $
  */
 
-/* Configuration time: $cf_time
- * Configured by: $cf_by
- * Target system: $myuname
+/*
+ * Package name      : $package
+ * Source directory  : $src
+ * Configuration time: $cf_time
+ * Configured by     : $cf_by
+ * Target system     : $myuname
  */
 
 #ifndef _config_h_

@@ -1,4 +1,4 @@
-?RCS: $Id: MailAuthor.U,v 3.0.1.4 1994/08/29 16:05:09 ram Exp $
+?RCS: $Id: MailAuthor.U,v 3.0.1.5 1997/02/28 15:04:41 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -11,6 +11,9 @@
 ?RCS: Original Author: Graham Stoney <greyham@research.canon.oz.au>
 ?RCS:
 ?RCS: $Log: MailAuthor.U,v $
+?RCS: Revision 3.0.1.5  1997/02/28  15:04:41  ram
+?RCS: patch61: added support for src.U
+?RCS:
 ?RCS: Revision 3.0.1.4  1994/08/29  16:05:09  ram
 ?RCS: patch32: avoid message sending if they said no previously
 ?RCS:
@@ -37,7 +40,7 @@
 ?X:	any future patches.
 ?X:
 ?MAKE:MailAuthor mailpatches notifypatches usermail: test cat mailer \
-	package Myread patchlevel baserev rm Oldconfig Configdir
+	package Myread patchlevel baserev rm rsrc Oldconfig Configdir
 ?MAKE:	-pick wipe $@ %<
 ?S:mailpatches:
 ?S:	Indicates whether the user would like future patches to be mailed
@@ -56,7 +59,7 @@
 ?T:opt mailpatches notifypatches atsh status
 : notify author that his package is used
 if $test -f ../.config/mailauthor &&
-	cmp ../patchlevel.h ../.config/mailauthor >/dev/null 2>&1
+	cmp $rsrc/patchlevel.h ../.config/mailauthor >/dev/null 2>&1
 then
 	status="say that you're using $package";
 	case "$mailpatches" in
@@ -96,7 +99,7 @@ fi
 case "$ans" in
 [yY]*)
 	echo " "
-	echo "Great!. You cooperation is really appreciated."
+	echo "Great! Your cooperation is really appreciated."
 	$cat <<EOM
 
 Some braindead sites do not set a proper return address in the From: header of
@@ -175,7 +178,7 @@ To: <MAINTLOC>
 $atsh package $usermail $package $baserev $patchlevel$opt
 EOM
 	$rm -f ../.config/mailauthor ../.config/nomail
-	cp ../patchlevel.h ../.config/mailauthor
+	cp $rsrc/patchlevel.h ../.config/mailauthor
 	;;
 *)
 	case "$dflt" in

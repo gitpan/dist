@@ -1,4 +1,4 @@
-?RCS: $Id: randbits.U,v 3.0 1993/08/18 12:09:38 ram Exp $
+?RCS: $Id: randbits.U,v 3.0.1.1 1997/02/28 16:19:29 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: randbits.U,v $
+?RCS: Revision 3.0.1.1  1997/02/28  16:19:29  ram
+?RCS: patch61: added <unistd.h> and <stdlib.h> to the C program test
+?RCS:
 ?RCS: Revision 3.0  1993/08/18  12:09:38  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
@@ -17,7 +20,7 @@
 ?X:	randfunc function (which finds out how to generate random
 ?X:	numbers between 0 and 1.
 ?X:
-?MAKE:randbits: cat rm Myread cc
+?MAKE:randbits: cat rm Myread cc i_unistd i_stdlib
 ?MAKE:	-pick add $@ %<
 ?S:randbits:
 ?S:	This variable contains the eventual value of the RANDBITS symbol,
@@ -35,8 +38,18 @@ echo " "
 case "$randbits" in
 '')
 	echo "Checking to see how many bits your rand function produces..." >&4
-	$cat >try.c <<'EOCP'
+	$cat >try.c <<EOCP
+#$i_unistd I_UNISTD
+#$i_stdlib I_STDLIB
 #include <stdio.h>
+#ifdef I_UNISTD
+#  include <unistd.h>
+#endif
+#ifdef I_STDLIB
+#  include <stdlib.h>
+#endif
+EOCP
+	$cat >>try.c <<'EOCP'
 main()
 {
 	register int i;

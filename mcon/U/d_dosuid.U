@@ -1,4 +1,4 @@
-?RCS: $Id: d_dosuid.U,v 3.0.1.1 1994/10/29 16:12:08 ram Exp $
+?RCS: $Id: d_dosuid.U,v 3.0.1.2 1997/02/28 15:33:03 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -11,6 +11,10 @@
 ?RCS: Tye McQueen <tye@metronet.com> added safe setuid script checks.
 ?RCS:
 ?RCS: $Log: d_dosuid.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  15:33:03  ram
+?RCS: patch61: moved unit to TOP via a ?Y: layout directive
+?RCS: patch61: tell them /dev/fd is not about floppy disks
+?RCS:
 ?RCS: Revision 3.0.1.1  1994/10/29  16:12:08  ram
 ?RCS: patch36: added checks for secure setuid scripts (Tye McQueen)
 ?RCS:
@@ -49,6 +53,7 @@
 ?H:#$d_suidsafe SETUID_SCRIPTS_ARE_SECURE_NOW	/**/
 ?H:#$d_dosuid DOSUID		/**/
 ?H:.
+?Y:TOP
 ?LINT: set d_suidsafe
 ?LINT: set d_dosuid
 : see if setuid scripts can be secure
@@ -120,6 +125,7 @@ EOM
 	fi
 else
 	echo "I don't think setuid scripts are secure (no /dev/fd directory)." >&4
+	echo "(That's for file descriptors, not floppy disks.)"
 	val="$undef"
 fi
 set d_suidsafe

@@ -1,4 +1,4 @@
-?RCS: $Id: nblock_io.U,v 3.0.1.1 1995/07/25 14:13:22 ram Exp $
+?RCS: $Id: nblock_io.U,v 3.0.1.2 1997/02/28 16:17:14 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,11 +9,20 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: nblock_io.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  16:17:14  ram
+?RCS: patch61: simplify here document for shells that can't handle them well
+?RCS: patch61: force use of "startsh" at the head of the generated script
+?RCS: patch61: added new files to the ?F: metalint hint
+?RCS:
 ?RCS: Revision 3.0.1.1  1995/07/25  14:13:22  ram
 ?RCS: patch56: created
 ?RCS:
+?X:
+?X: Simplify here document for shells that can't handle them well.
+?X: (Problem reported on FreeBSD; it's unclear if this helps.)  --AD
+?X:
 ?MAKE:o_nonblock eagain rd_nodata d_eofnblk: cat rm +cc +ccflags +ldflags \
-	d_open3 h_sysfile h_fcntl signal_t hint Oldconfig Setvar
+	d_open3 h_sysfile h_fcntl signal_t hint Oldconfig Setvar startsh
 ?MAKE:	-pick add $@ %<
 ?S:o_nonblock:
 ?S:	This variable bears the symbol value to be used during open() or fcntl()
@@ -63,7 +72,7 @@
 ?H:#define RD_NODATA $rd_nodata
 ?H:#$d_eofnblk EOF_NONBLOCK
 ?H:.
-?F:!try
+?F:!try !try.out !try.ret !try.err
 ?T:status
 ?LINT:use d_open3
 : check for non-blocking I/O stuff
@@ -123,8 +132,11 @@ case "$eagain" in
 #include <errno.h>
 #include <sys/types.h>
 #include <signal.h>
+#define MY_O_NONBLOCK $o_nonblock
 extern int errno;
 $signal_t blech(x) int x; { exit(3); }
+EOCP
+	$cat >> try.c <<'EOCP'
 main()
 {
 	int pd[2];
@@ -138,7 +150,7 @@ main()
 		int ret;
 		close(pd[1]);	/* Parent reads from pd[0] */
 		close(pu[0]);	/* Parent writes (blocking) to pu[1] */
-		if (-1 == fcntl(pd[0], F_SETFL, $o_nonblock))
+		if (-1 == fcntl(pd[0], F_SETFL, MY_O_NONBLOCK))
 			exit(1);
 		signal(SIGALRM, blech);
 		alarm(5);
@@ -175,9 +187,10 @@ main()
 	exit(0);				/* Bye bye, thank you for playing! */
 }
 EOCP
-	if $cc $ccflags $ldflags try.c -o try >/dev/null; 2>&1; then
+	if $cc $ccflags $ldflags try.c -o try >/dev/null 2>&1; then
 ?X: Use script to avoid the possible 'alarm call' message
-		echo "./try >try.out 2>try.ret 3>try.err || exit 4" >mtry
+		echo "$startsh" >mtry
+		echo "./try >try.out 2>try.ret 3>try.err || exit 4" >>mtry
 		chmod +x mtry
 		./mtry >/dev/null 2>&1
 		case $? in
@@ -212,7 +225,7 @@ EOCP
 		*) echo "However, your read() returns '$status' on EOF??";;
 		esac
 		val="$define"
-		if test "$status" -eq "$rd_nodata"; then
+		if test "$status" = "$rd_nodata"; then
 			echo "WARNING: you can't distinguish between EOF and no data!"
 			val="$undef"
 		fi

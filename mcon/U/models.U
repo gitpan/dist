@@ -1,4 +1,4 @@
-?RCS: $Id: models.U,v 3.0.1.1 1993/08/25 14:02:39 ram Exp $
+?RCS: $Id: models.U,v 3.0.1.2 1997/02/28 16:13:17 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: models.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  16:13:17  ram
+?RCS: patch61: added ?F: metalint hint
+?RCS:
 ?RCS: Revision 3.0.1.1  1993/08/25  14:02:39  ram
 ?RCS: patch6: added default for large
 ?RCS:
@@ -52,6 +55,7 @@
 ?S:	model programs.  It is up to the Makefile to use this.
 ?S:.
 ?T:unsplit tans
+?F:!pdp11
 ?D:large=''
 : see what memory models we can support
 case "$models" in

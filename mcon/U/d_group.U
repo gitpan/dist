@@ -1,4 +1,4 @@
-?RCS: $Id: d_group.U,v 3.0.1.1 1994/08/29 16:07:48 ram Exp $
+?RCS: $Id: d_group.U,v 3.0.1.2 1997/02/28 15:34:52 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -11,23 +11,13 @@
 ?RCS: Original Author: Andy Dougherty <doughera@lafcol.lafayette.edu>
 ?RCS:
 ?RCS: $Log: d_group.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  15:34:52  ram
+?RCS: patch61: useless unit dropped.
+?RCS:
 ?RCS: Revision 3.0.1.1  1994/08/29  16:07:48  ram
 ?RCS: patch32: created by ADO
 ?RCS:
-?MAKE:d_group: Inlibc
-?MAKE:	-pick add $@ %<
-?S:d_group:
-?S:	This variable conditionally defines the HAS_GROUP symbol, which
-?S:	indicates to the C program that the group() routine is available.
-?S:.
-?C:HAS_GROUP :
-?C:	This symbol, if defined, indicates that the group routine is
-?C:	available.
-?C:.
-?H:#$d_group HAS_GROUP		/**/
-?H:.
-?LINT:set d_group
-: see if group exists
-set group d_group
-eval $inlibc
-
+?X:
+?X: Useless unit dropped.
+?X:
+?LINT:empty

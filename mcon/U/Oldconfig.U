@@ -1,4 +1,4 @@
-?RCS: $Id: Oldconfig.U,v 3.0.1.9 1995/07/25 13:40:51 ram Exp $
+?RCS: $Id: Oldconfig.U,v 3.0.1.10 1997/02/28 15:06:39 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,11 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Oldconfig.U,v $
+?RCS: Revision 3.0.1.10  1997/02/28  15:06:39  ram
+?RCS: patch61: added support for src.U
+?RCS: patch61: new OSNAME define
+?RCS: patch61: can now sense new OSes
+?RCS:
 ?RCS: Revision 3.0.1.9  1995/07/25  13:40:51  ram
 ?RCS: patch56: now knows about OS/2 platforms
 ?RCS:
@@ -53,7 +58,7 @@
 ?X: for the sake of setting defaults.
 ?X:
 ?MAKE:Oldconfig hint myuname osname osvers: Instruct Myread uname \
-	awk sed test cat rm lns n c contains Loc Options Tr
+	sh awk sed test cat rm lns n c contains Loc Options Tr src
 ?MAKE:	-pick wipe $@ %<
 ?S:myuname:
 ?S:	The output of 'uname -a' if available, otherwise the hostname. On Xenix,
@@ -80,10 +85,18 @@
 ?S:	same for this package, hints files might just be os_4.0 or
 ?S:	os_4.1, etc., not keeping separate files for each little release.
 ?S:.
+?C:OSNAME:
+?C:	This symbol contains the name of the operating system, as determined
+?C:	by Configure.  You shouldn't rely on it too much; the specific
+?C:	feature tests from Configure are generally more reliable.
+?C:.
+?H:#define OSNAME "$osname"		/**/
+?H:.
 ?F:!config.sh
-?T:tmp tmp_n tmp_c file xxxxfile xxxfile xxfile xfile hintfile newmyuname
+?T:tmp tmp_n tmp_c tmp_sh file 
+?T:xxxxfile xxxfile xxfile xfile hintfile newmyuname
 ?T:tans _ isesix INITPROG
-?LINT:change n c
+?LINT:change n c sh
 : Try to determine whether config.sh was made on this system
 case "$config_sh" in
 '')
@@ -122,6 +135,8 @@ esac
 : same system, otherwise use the hints.
 hint=default
 cd ..
+?X: Since we are now at the root of the source tree, we must use $src
+?X: to access the sources and not $rsrc. See src.U for details...
 if test -f config.sh; then
 	echo " "
 	rp="I see a config.sh file.  Shall I use it to set the defaults?"
@@ -131,10 +146,16 @@ if test -f config.sh; then
 	*)  echo "Fetching default answers from your old config.sh file..." >&4
 		tmp_n="$n"
 		tmp_c="$c"
+		tmp_sh="$sh"
 		. ./config.sh
 		cp config.sh UU
 		n="$tmp_n"
 		c="$tmp_c"
+		: Older versions did not always set $sh.  Catch re-use of such
+		: an old config.sh.
+		case "$sh" in
+		'') sh="$tmp_sh" ;;
+		esac
 		hint=previous
 		;;
 	esac
@@ -145,7 +166,7 @@ if test ! -f config.sh; then
 First time through, eh?  I have some defaults handy for the following systems:
 
 EOM
-	cd hints; ls -C *.sh | $sed 's/\.sh/   /g' >&4
+	(cd $src/hints; ls -C *.sh) | $sed 's/\.sh/   /g' >&4
 	dflt=''
 	: Half the following guesses are probably wrong... If you have better
 	: tests or hints, please send them to <MAINTLOC>
@@ -154,16 +175,32 @@ EOM
 	$test -f /xenix && osname=sco_xenix
 	$test -f /dynix && osname=dynix
 	$test -f /dnix && osname=dnix
- 	$test -f /unicos && osname=unicos && osvers=`$uname -r`
+	$test -f /lynx.os && osname=lynxos
+	$test -f /unicos && osname=unicos && osvers=`$uname -r`
+	$test -f /unicosmk.ar && osname=unicosmk && osvers=`$uname -r`
 	$test -f /bin/mips && /bin/mips && osname=mips
 	$test -d /NextApps && set X `hostinfo | grep 'NeXT Mach.*:' | \
 		$sed -e 's/://' -e 's/\./_/'` && osname=next && osvers=$4
 	$test -d /usr/apollo/bin && osname=apollo
 	$test -f /etc/saf/_sactab && osname=svr4
 	$test -d /usr/include/minix && osname=minix
-	$test -d /MachTen && osname=machten && \
-		osvers=`/usr/etc/version | $awk '{print $2}' | \
-		$sed -e 's/[A-Za-z]$//'`
+	if $test -d /MachTen; then
+?X:		MachTen uname -a output looks like
+?X:		xxx 4 0.0 Macintosh
+?X:		MachTen /sbin/version output looks like
+?X:		MachTen 4.0 Mon Aug 28 10:18:00 1995
+?X:		MachTen 3.x had the 'version' command in /usr/etc/version.
+		osname=machten
+		if $test -x /sbin/version; then
+			osvers=`/sbin/version | $awk '{print $2}' |
+			$sed -e 's/[A-Za-z]$//'`
+		elif $test -x /usr/etc/version; then
+			osvers=`/usr/etc/version | $awk '{print $2}' |
+			$sed -e 's/[A-Za-z]$//'`
+		else
+			osvers="$2.$3"
+		fi
+	fi
 ?X: If we have uname, we already computed a suitable uname -a output, correctly
 ?X: formatted for Xenix, and it lies in $myuname.
 	if $test -f $uname; then
@@ -212,6 +249,9 @@ EOM
 			*) osvers=$tmp;;
 			esac
 			;;
+		*dc.osx) osname=dcosx
+			osvers="$3"
+			;;
 		dnix) osname=dnix
 			osvers="$3"
 			;;
@@ -219,6 +259,11 @@ EOM
 			osvers="$3"
 			;;
 		dgux) osname=dgux 
+			osvers="$3"
+			;;
+?X:		uname -a returns
+?X:		DYNIX/ptx xxx 4.0 V4.1.2 i386
+		dynixptx*) osname=dynixptx
 			osvers="$3"
 			;;
 		freebsd) osname=freebsd 
@@ -232,7 +277,7 @@ EOM
 			*)	osvers="$3" ;;
 			esac
 			;;
-		irix) osname=irix
+		irix*) osname=irix
 			case "$3" in
 			4*) osvers=4 ;;
 			5*) osvers=5 ;;
@@ -277,7 +322,7 @@ EOM
 		ultrix) osname=ultrix
 			osvers="$3"
 			;;
-		osf1)	case "$5" in
+		osf1|mls+)	case "$5" in
 				alpha)
 ?X: DEC OSF/1 myuname -a output looks like:  osf1 xxxx t3.2 123.4 alpha
 ?X: where the version number can be either vn.n or tn.n.
@@ -292,10 +337,13 @@ EOM
 		uts) osname=uts 
 			osvers="$3"
 			;;
+		qnx) osname=qnx
+			osvers="$4"
+			;;
 		$2) case "$osname" in
 			*isc*) ;;
 			*freebsd*) ;;
- 			svr*)
+			svr*)
 				: svr4.x or possibly later
 				case "svr$3" in	
 				${osname}*)
@@ -349,12 +397,12 @@ EOM
 		esac
 	else
 ?X: Try to identify sony's NEWS-OS (BSD unix)
-		if test -f /vmunix -a -f news_os.sh; then
-			(what /vmunix | ../UU/tr '[A-Z]' '[a-z]') > ../UU/kernel.what 2>&1
-			if $contains news-os ../UU/kernel.what >/dev/null 2>&1; then
+		if test -f /vmunix -a -f $src/hints/news_os.sh; then
+			(what /vmunix | UU/tr '[A-Z]' '[a-z]') > UU/kernel.what 2>&1
+			if $contains news-os UU/kernel.what >/dev/null 2>&1; then
 				osname=news_os
 			fi
-			$rm -f ../UU/kernel.what
+			$rm -f UU/kernel.what
 ?X: Maybe it's an OS/2
 		elif test -d c:/.; then
 			set X $myuname
@@ -378,17 +426,17 @@ EOM
 		*)  case "$osvers" in
 			'') dflt=$file
 				;;
-			*)  if $test -f $file.sh ; then
+			*)  if $test -f $src/hints/$file.sh ; then
 					dflt=$file
-				elif $test -f $xfile.sh ; then
+				elif $test -f $src/hints/$xfile.sh ; then
 					dflt=$xfile
-				elif $test -f $xxfile.sh ; then
+				elif $test -f $src/hints/$xxfile.sh ; then
 					dflt=$xxfile
-				elif $test -f $xxxfile.sh ; then
+				elif $test -f $src/hints/$xxxfile.sh ; then
 					dflt=$xxxfile
-				elif $test -f $xxxxfile.sh ; then
+				elif $test -f $src/hints/$xxxxfile.sh ; then
 					dflt=$xxxxfile
-				elif $test -f "${osname}.sh" ; then
+				elif $test -f "$src/hints/${osname}.sh" ; then
 					dflt="${osname}"
 				else
 					dflt=none
@@ -410,12 +458,12 @@ If your OS version has no hints, DO NOT give a wrong version -- say "none".
 
 EOM
 	rp="Which of these apply, if any?"
-	. ../UU/myread
+	. UU/myread
 	tans=$ans
 	for file in $tans; do
-		if $test -f $file.sh; then
-			. ./$file.sh
-			$cat $file.sh >> ../UU/config.sh
+		if $test -f $src/hints/$file.sh; then
+			. $src/hints/$file.sh
+			$cat $src/hints/$file.sh >> UU/config.sh
 		elif $test X$tans = X -o X$tans = Xnone ; then
 			: nothing
 		else
@@ -423,11 +471,11 @@ EOM
 			echo "$file.sh does not exist"
 			dflt=$file
 			rp="hint to use instead?"
-			. ../UU/myread
+			. UU/myread
 			for file in $ans; do
-				if $test -f "$file.sh"; then
-					. ./$file.sh
-					$cat $file.sh >> ../UU/config.sh
+				if $test -f "$src/hints/$file.sh"; then
+					. $src/hints/$file.sh
+					$cat $src/hints/$file.sh >> UU/config.sh
 				elif $test X$ans = X -o X$ans = Xnone ; then
 					: nothing
 				else
@@ -439,15 +487,14 @@ EOM
 
 	hint=recommended
 	: Remember our hint file for later.
-	if $test -f "$file.sh" ; then
+	if $test -f "$src/hints/$file.sh" ; then
 		hintfile="$file"
 	else
 		hintfile=''
 	fi
-
-	cd ..
 fi
 cd UU
+?X: From here on, we must use $rsrc instead of $src
 @else
 : Get old answers, if there is a config file out there
 hint=default
@@ -480,6 +527,7 @@ fi
 	cd ..
 ?X: preserve symbolic links, if any
 	cp $config_sh config.sh 2>/dev/null
+	chmod +w config.sh
 	. ./config.sh
 	cd UU
 	cp ../config.sh .

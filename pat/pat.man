@@ -1,5 +1,5 @@
 .rn '' }`
-''' $Id: pat.man,v 3.0.1.6 1995/09/25 09:20:41 ram Exp $
+''' $Id: pat.man,v 3.0.1.7 1997/02/28 16:32:45 ram Exp $
 '''
 '''  Copyright (c) 1991-1993, Raphael Manfredi
 '''  
@@ -10,6 +10,9 @@
 '''  of the source tree for dist 3.0.
 '''
 ''' $Log: pat.man,v $
+''' Revision 3.0.1.7  1997/02/28  16:32:45  ram
+''' patch61: documents contents of the message sent by patnotify
+'''
 ''' Revision 3.0.1.6  1995/09/25  09:20:41  ram
 ''' patch59: new -i option for patsend to add extra instructions
 '''
@@ -357,7 +360,10 @@ merely copies the patch into your public ftp directory.
 simply notifies users that a new patch has been released so that
 they can retrieve it by themselves from an archive site or via e-mail if they
 are interested. The \fB\-u\fR switch can be used to include all the currently
-registered users who have asked for such a notification.
+registered users who have asked for such a notification. The message includes
+the patch priority and description, as well as instructions on how to
+automatically request the patch (which will work only if you
+have \fImailagent\fR installed).
 .PP
 Both \fIpatsend\fR and \fIpatnotify\fR let you edit the address list before
 actually sending anything, unless you add the \fB\-q\fR option.

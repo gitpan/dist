@@ -1,4 +1,4 @@
-?RCS: $Id: Chk_MANI.U,v 3.0.1.1 1994/10/31 09:33:14 ram Exp $
+?RCS: $Id: Chk_MANI.U,v 3.0.1.2 1997/02/28 14:57:25 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Chk_MANI.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  14:57:25  ram
+?RCS: patch61: added support for src.U
+?RCS:
 ?RCS: Revision 3.0.1.1  1994/10/31  09:33:14  ram
 ?RCS: patch44: now lists Begin instead of Myinit in its dependencies
 ?RCS: patch44: leading comment now explains how this unit is included
@@ -22,23 +25,25 @@
 ?X: is always present in every Configure script), although it may result in
 ?X: an empty inclusion when no MANIFEST is present.
 ?X:
-?MAKE:Chk_MANI: Begin c n
+?MAKE:Chk_MANI: Begin c n rsrc
 ?MAKE:	-pick wipe $@ %<
-?T:filelist ans
+?T:filelist ans tmppwd
+?X: This check happens at metaconfig-time, so it's ok to hard-code the path.
 @if {test -f ../MANIFEST}
 : Now test for existence of everything in MANIFEST
 echo " "
-if test -f ../MANIFEST; then
+if test -f $rsrc/MANIFEST; then
 	echo "First let's make sure your kit is complete.  Checking..." >&4
 ?X:
 ?X: Files spelled uppercased and beginning with PACK are produced by the
 ?X: shell archive builder and may be removed by the user. Usually, they are
 ?X: not listed in the MANIFEST file, but you never know...
 ?X:
-	awk '$1 !~ /PACK[A-Z]+/ {print $1}' ../MANIFEST | split -50
+	awk '$1 !~ /PACK[A-Z]+/ {print $1}' $rsrc/MANIFEST | split -50
 	rm -f missing
+	tmppwd=`pwd`
 	for filelist in x??; do
-		(cd ..; ls `cat UU/$filelist` >/dev/null 2>>UU/missing)
+		(cd $rsrc; ls `cat $tmppwd/$filelist` >/dev/null 2>>$tmppwd/missing)
 	done
 	if test -s missing; then
 		cat missing >&4
@@ -69,7 +74,7 @@ EOM
 			;;
 		esac
 	else
-		echo "Looks good..." >&4
+		echo "Looks good..."
 	fi
 else
 	echo "There is no MANIFEST file.  I hope your kit is complete !"

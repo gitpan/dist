@@ -1,7 +1,7 @@
 /*
  * Generic jmake template
  *
- * $Id: Jmake.tmpl,v 3.0.1.2 1995/01/11 14:50:21 ram Exp $
+ * $Id: Jmake.tmpl,v 3.0.1.3 1997/02/28 14:56:16 ram Exp $
  *
  *  Copyright (c) 1991-1993, Raphael Manfredi
  *  
@@ -12,6 +12,9 @@
  *  of the source tree for dist 3.0.
  *
  * $Log: Jmake.tmpl,v $
+ * Revision 3.0.1.3  1997/02/28  14:56:16  ram
+ * patch61: lex path can now be configured
+ *
  * Revision 3.0.1.2  1995/01/11  14:50:21  ram
  * patch45: now pre-computes INSTALL and INSTALLDIR variables
  *
@@ -24,7 +27,7 @@
  */
 
 : Makefile.SH generated from Jmake.tmpl and Jmakefile <TAG>
-: $Id: Jmake.tmpl,v 3.0.1.2 1995/01/11 14:50:21 ram Exp $
+: $Id: Jmake.tmpl,v 3.0.1.3 1997/02/28 14:56:16 ram Exp $
 
 /*************************************************************************
  *                                                                       *
@@ -89,7 +92,7 @@ DIR = $DIR
 ?JYFLAGS:JYFLAGS = \$(YFLAGS) $yaccflags
 ?L:L = $manext
 ?LD:LD = ld
-?LEX:LEX = lex
+?LEX:LEX = $lex
 ?LIBS:LIBS = $libs
 ?LINT:LINT = lint
 ?LN:LN = $ln

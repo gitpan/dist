@@ -1,4 +1,4 @@
-?RCS: $Id: byteorder.U,v 3.0.1.1 1994/10/29 16:02:58 ram Exp $
+?RCS: $Id: byteorder.U,v 3.0.1.2 1997/02/28 15:24:55 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: byteorder.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  15:24:55  ram
+?RCS: patch61: no longer ask the user if the test runs ok
+?RCS:
 ?RCS: Revision 3.0.1.1  1994/10/29  16:02:58  ram
 ?RCS: patch36: added ?F: line for metalint file checking
 ?RCS:
@@ -29,6 +32,7 @@
 ?C:.
 ?H:#define BYTEORDER 0x$byteorder	/* large digits for MSB */
 ?H:.
+?T:xxx_prompt
 ?F:!try
 : check for ordering of bytes in a long
 case "$byteorder" in
@@ -59,13 +63,20 @@ main()
 	for (i = 0; i < sizeof(long); i++)
 		printf("%c", u.c[i]+'0');
 	printf("\n");
+	exit(0);
 }
 EOCP
-	if $cc $ccflags try.c -o try >/dev/null 2>&1 ; then
+	xxx_prompt=y
+	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
 		dflt=`./try`
 		case "$dflt" in
-		????|????????) echo "(The test program ran ok.)";;
-		*) echo "(The test program didn't run right for some reason.)";;
+		[1-4][1-4][1-4][1-4]|12345678|87654321)
+			echo "(The test program ran ok.)"
+			echo "byteorder=$dflt"
+			xxx_prompt=n
+			;;
+		????|????????) echo "(The test program ran ok.)" ;;
+		*) echo "(The test program didn't run right for some reason.)" ;;
 		esac
 	else
 		dflt='4321'
@@ -73,14 +84,16 @@ EOCP
 (I can't seem to compile the test program.  Guessing big-endian...)
 EOM
 	fi
-	;;
-*)
-	echo " "
-	dflt="$byteorder"
+	case "$xxx_prompt" in
+	y)
+		rp="What is the order of bytes in a long?"
+		. ./myread
+		byteorder="$ans"
+		;;
+	*)	byteorder=$dflt
+		;;
+	esac
 	;;
 esac
-rp="What is the order of bytes in a long?"
-. ./myread
-byteorder="$ans"
 $rm -f try.c try
 

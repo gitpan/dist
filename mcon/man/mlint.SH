@@ -20,7 +20,7 @@ $spitshell >metalint.$manext <<!GROK!THIS!
 .TH METALINT $manext "Version $VERSION PL$PATCHLEVEL"
 ''' @(#) Manual page for metalint
 '''
-''' $Id: mlint.SH,v 3.0.1.8 1995/09/25 09:18:07 ram Exp $
+''' $Id: mlint.SH,v 3.0.1.9 1997/02/28 16:30:25 ram Exp $
 '''
 '''  Copyright (c) 1991-1993, Raphael Manfredi
 '''  
@@ -31,6 +31,10 @@ $spitshell >metalint.$manext <<!GROK!THIS!
 '''  of the source tree for dist 3.0.
 '''
 ''' $Log: mlint.SH,v $
+''' Revision 3.0.1.9  1997/02/28  16:30:25  ram
+''' patch61: new "create" and "empty" lint directives
+''' patch61: documented new messages
+'''
 ''' Revision 3.0.1.8  1995/09/25  09:18:07  ram
 ''' patch59: documented new ?Y: directive
 ''' patch59: fixed my e-mail address
@@ -209,6 +213,7 @@ file with the same name, for instance.
 "(?F) UU file $uufile in non-special unit ignored."
 Private UU files (i.e. files like the \fImyread\fR script created for
 later perusal by \fIConfigure\fR) may only be created in special units.
+Exceptions allowed if the ?F: line is preceded by a proper ?LINT: hint.
 .TP
 "(?T) temporary symbol '\$xxx' multiply declared."
 Self explainatory.
@@ -224,7 +229,7 @@ this message in pathological cases.
 .TP
 "no ?MAKE: line describing dependencies."
 Every unit should have a dependency line, or it will be silently ignored by
-\fImetaconfig\fR.
+\fImetaconfig\fR. This message is suppressed by a ?LINT: empty hint.
 .TP
 "not ending with a blank line."
 Since all units are gathered together to form one big script, it is recommended
@@ -266,6 +271,9 @@ hint will fool \fImetalint\fR into thinking it's indeed used.
 "unknown control sequence '?XXX:'."
 Attempt to use an unknown control sequence.
 .TP
+"unknown LINT request '$xxx' ignored."
+An unknown ?LINT: tag was used. All such tags must be spelled out in lowercase.
+.TP
 "symbol '\$xxx' has no default value."
 A symbol used as a conditional dependency in some unit has no default value
 set by a ?D: line.
@@ -286,7 +294,8 @@ Magic line lists a C symbol as a dependency but that symbol is not known
 by any unit.
 .TP
 "unknown symbol '\$xxx'."
-I have no idea about what this symbol is.
+I have no idea about what this symbol is. If the variable is externally
+define, this warning can be suppresed via a proper ?LINT: extern.
 .TP
 "read-only symbol '\$xxx' is set."
 A symbol that should be read-only is set by the unit's shell code body.
@@ -428,6 +437,9 @@ Specifies a lint hint. The following keywords are available:
 .I change
 shell variable ok to be changed
 .TP
+.I create
+persistent file ok to be created by non-special unit
+.TP
 .I define
 shell variables listed are defined in this unit
 .TP
@@ -436,6 +448,9 @@ listed shell variables are described by ?S:
 .TP
 .I extern
 variable known to be externally defined
+.TP
+.I empty
+unit file is empty and kept only as a placeholder.
 .TP
 .I known
 listed C variables are described

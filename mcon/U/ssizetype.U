@@ -1,4 +1,4 @@
-?RCS: $Id: ssizetype.U,v 3.0.1.2 1994/10/29 16:30:28 ram Exp $
+?RCS: $Id: ssizetype.U,v 3.0.1.3 1997/02/28 16:24:21 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -11,6 +11,9 @@
 ?RCS: Original Author: Andy Dougherty <doughera@lafcol.lafayette.edu>
 ?RCS:
 ?RCS: $Log: ssizetype.U,v $
+?RCS: Revision 3.0.1.3  1997/02/28  16:24:21  ram
+?RCS: patch61: integrated perl5 concerns for mis-configured sfio
+?RCS:
 ?RCS: Revision 3.0.1.2  1994/10/29  16:30:28  ram
 ?RCS: patch36: added ?F: line for metalint file checking
 ?RCS: patch36: added 'ldflags' to the test compile line (ADO)
@@ -18,7 +21,8 @@
 ?RCS: Revision 3.0.1.1  1994/08/29  16:33:06  ram
 ?RCS: patch32: created by ADO
 ?RCS:
-?MAKE:ssizetype: Myread Typedef sizetype cat rm cc ccflags ldflags libs
+?MAKE:ssizetype: Myread Typedef sizetype cat rm \
+	+cc +optimize +ccflags +ldflags +libs _o
 ?MAKE:	-pick add $@ %<
 ?S:ssizetype:
 ?S:	This variable defines ssizetype to be something like ssize_t, 
@@ -36,7 +40,7 @@
 ?C:.
 ?H:#define SSize_t $ssizetype	 /* signed count of bytes */
 ?H:.
-?F:!ssize
+?F:!ssize.out
 : see what type is used for signed size_t
 set ssize_t ssizetype int stdio.h sys/types.h
 eval $typedef
@@ -55,23 +59,33 @@ main()
 		printf("int\n");
 	else 
 		printf("long\n");
+	fflush(stdout);
+	exit(0);
 }
 EOM
 echo " "
-if $cc $ccflags $ldflags -o ssize ssize.c $libs > /dev/null 2>&1 ; then
-	ssizetype=`./ssize`
+?X: If $libs contains -lsfio, and sfio is mis-configured, then it
+?X: sometimes (apparently) runs and exits with a 0 status, but with no
+?X: output!.  Thus we check with test -s whether we actually got any
+?X: output.  I think it has to do with sfio's use of _exit vs. exit,
+?X: but I don't know for sure.  --Andy Dougherty  1/27/97.
+if $cc $optimize $ccflags $ldflags -o ssize ssize.c $libs > /dev/null 2>&1  &&
+		./ssize > ssize.out 2>/dev/null && test -s ssize.out ; then
+	ssizetype=`$cat ssize.out`
 	echo "I'll be using $ssizetype for functions returning a byte count." >&4
 else
-	echo "(I can't compile the test program--please enlighten me!)"
-	$cat <<EOM
+	$cat >&4 <<EOM
+Help! I can't compile and run the ssize_t test program: please enlighten me!
+(This is probably a misconfiguration in your system or libraries, and
+you really ought to fix it.  Still, I'll try anyway.)
 
 I need a type that is the same size as $sizetype, but is guaranteed to
-be signed.  Common values are int and long.
+be signed.  Common values are ssize_t, int and long.
 
 EOM
 	rp="What signed type is the same size as $sizetype?"
 	. ./myread
 	ssizetype="$ans"
 fi
-$rm -f ssize ssize.[co]
+$rm -f ssize ssize$_o ssize.*
 

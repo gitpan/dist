@@ -1,4 +1,4 @@
-?RCS: $Id: libpth.U,v 3.0.1.5 1995/01/11 15:31:30 ram Exp $
+?RCS: $Id: libpth.U,v 3.0.1.6 1997/02/28 16:08:49 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: libpth.U,v $
+?RCS: Revision 3.0.1.6  1997/02/28  16:08:49  ram
+?RCS: patch61: new loclibpth variable
+?RCS:
 ?RCS: Revision 3.0.1.5  1995/01/11  15:31:30  ram
 ?RCS: patch45: call ./mips instead of just mips (WED)
 ?RCS:
@@ -31,11 +34,17 @@
 ?X:
 ?X:	This unit initializes the path for C library lookup.
 ?X:
-?MAKE:libpth glibpth xlibpth plibpth: mips incpath test cat Myread Oldconfig
+?MAKE:libpth glibpth xlibpth plibpth loclibpth: \
+	usrinc mips incpath test cat Myread Oldconfig
 ?MAKE:	-pick add $@ %<
 ?S:libpth:
 ?S:	This variable holds the general path used to find libraries. It is
 ?S:	intended to be used by other units.
+?S:.
+?S:loclibpth:
+?S:	This variable holds the paths used to find local libraries.  It is
+?S:	prepended to libpth, and is intended to be easily set from the
+?S:	command line.
 ?S:.
 ?S:plibpth:
 ?S:	Holds the private path used by Configure to find out the libraries.
@@ -46,11 +55,19 @@
 ?INIT:: change the next line if compiling for Xenix/286 on Xenix/386
 ?INIT:xlibpth='/usr/lib/386 /lib/386'
 ?INIT:
+?INIT:: Possible local library directories to search.
+?INIT:loclibpth="/usr/local/lib /opt/local/lib /usr/gnu/lib"
+?INIT:loclibpth="$loclibpth /opt/gnu/lib /usr/GNU/lib /opt/GNU/lib"
+?INIT:
 ?INIT:: general looking path for locating libraries
-?X: /lib/pa1.1 is for HP-UX specially tuned PA-RISC libraries.
-?INIT:glibpth="/lib/pa1.1 /usr/lib/large /lib /usr/lib $xlibpth"
+?X:	/lib/pa1.1 is for HP-UX specially tuned PA-RISC libraries.
+?X:	/shlib is for Digital Unix 4.0
+?X:	/usr/shlib is for OSF/1 systems.
+?X:	I don't know why the large & small libraries are in this order.
+?INIT:glibpth="/shlib /usr/shlib /lib/pa1.1 /usr/lib/large"
+?INIT:glibpth="$glibpth /lib /usr/lib $xlibpth"
 ?INIT:glibpth="$glibpth /lib/large /usr/lib/small /lib/small"
-?INIT:glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/local/lib /usr/shlib"
+?INIT:glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/local/lib"
 ?INIT:
 ?INIT:: Private path used by Configure to find libraries.  Its value
 ?INIT:: is prepended to libpth. This variable takes care of special
@@ -58,7 +75,7 @@
 ?INIT:plibpth=''
 ?INIT:
 ?LINT:describe xlibpth glibpth
-?LINT:use mips
+?LINT:use mips usrinc
 : Set private lib path
 case "$plibpth" in
 '') if ./mips; then
@@ -68,7 +85,7 @@ case "$plibpth" in
 esac
 case "$libpth" in
 ' ') dlist='';;
-'') dlist="$plibpth $glibpth";;
+'') dlist="$loclibpth $plibpth $glibpth";;
 *) dlist="$libpth";;
 esac
 

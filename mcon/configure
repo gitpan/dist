@@ -1,14 +1,14 @@
 #! /bin/sh
 #
-# $Id: configure,v 3.0.1.1 1995/07/25 14:16:21 ram Exp $
+# $Id: configure,v 3.0.1.2 1997/02/28 16:28:49 ram Exp $
 #
 # GNU configure-like front end to metaconfig's Configure.
 #
 # Written by Andy Dougherty <doughera@lafcol.lafayette.edu>
-# and Matthew Green <mrg@mame.mu.oz.au>.
+# Matthew Green <mrg@mame.mu.oz.au> and Tom Tromey <tromey@cygnus.com>.
 #
 # Reformatted and modified for inclusion in the dist-3.0 package by
-# Raphael Manfredi <ram@hptnos02.grenoble.hp.com>.
+# Raphael Manfredi <Raphael_Manfredi@grenoble.hp.com>.
 #
 # This script belongs to the public domain and may be freely redistributed.
 #
@@ -16,6 +16,10 @@
 # include this script in your own package.
 #
 # $Log: configure,v $
+# Revision 3.0.1.2  1997/02/28  16:28:49  ram
+# patch61: added the srcdir support now that we have src.U
+# patch61: random cleanup for nicer help message
+#
 # Revision 3.0.1.1  1995/07/25  14:16:21  ram
 # patch56: created
 #
@@ -24,6 +28,7 @@
 opts=''
 verbose=''
 create='-e'
+srcdir=''
 while test $# -gt 0; do
 	case $1 in
     --help)
@@ -31,15 +36,19 @@ while test $# -gt 0; do
 Usage: configure [options]
 This is GNU configure-like front end for a metaconfig-generated Configure.
 It emulates the following GNU configure options (must be fully spelled out):
-	--help
-	--no-create
-	--prefix=PREFIX
-	--quiet
-	--silent
-	--verbose
-	--version
+
+    --help               --srcdir=DIRECTORY
+    --no-create          --silent
+    --prefix=PREFIX      --verbose
+    --quiet              --version
 
 And it honours these environment variables: CC, CFLAGS and DEFS.
+
+Furthermore, it ignores the following arguments, when supplied:
+
+    --cache-file=FILE    --target=TARGET
+    --enable-*           --with-*
+    --host=HOST
 EOM
 		exit 0
 		;;
@@ -52,6 +61,21 @@ EOM
 		opts="$opts $arg"
 		shift
 		;;
+	--prefix)
+		shift
+		opts="$opts -Dprefix=$1"
+		shift
+		;;
+	--srcdir=*)
+		arg=`echo $1 | sed 's/--srcdir=//'`
+		srcdir=$arg
+		shift
+		;;
+	--srcdir)
+		shift
+		srcdir=$1
+		shift
+		;;
 	--quiet|--silent)
 		exec >/dev/null 2>&1
 		shift
@@ -62,6 +86,9 @@ EOM
 		;;
 	--version)
 		copt="$copt -V"
+		shift
+		;;
+	--host=*|--target=*|--cache-file=*|--enable-*|--with-*)
 		shift
 		;;
 	--*)
@@ -102,7 +129,16 @@ case "$verbose" in
 *) copt="$copt -d";;
 esac
 
-set X ./Configure $copt $create $opts
+# Figure out srcdir if not set already
+case "$srcdir" in
+'') srcdir=`echo $0 | sed -e 's%/[^/][^/]*$%%'`;;
+esac
+case "$srcdir" in
+".") ;;
+*) opts="$opts -Dsrc=$srcdir";;
+esac
+
+set X sh $srcdir/Configure $copt $create $opts
 shift
 echo "$@"
 exec "$@"

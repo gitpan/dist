@@ -1,4 +1,4 @@
-?RCS: $Id: voidflags.U,v 3.0.1.1 1995/01/11 15:37:44 ram Exp $
+?RCS: $Id: voidflags.U,v 3.0.1.2 1997/02/28 16:27:58 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,13 +9,17 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: voidflags.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  16:27:58  ram
+?RCS: patch61: don't prompt them if the void support is high enough for us
+?RCS:
 ?RCS: Revision 3.0.1.1  1995/01/11  15:37:44  ram
 ?RCS: patch45: cosmetic change to avoid spurious blank lines when using -s
 ?RCS:
 ?RCS: Revision 3.0  1993/08/18  12:10:01  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:voidflags defvoidused: cat rm contains cc package Oldconfig Myread
+?MAKE:voidflags defvoidused: cat rm contains +cc +ccflags package \
+	Oldconfig Myread
 ?MAKE:	-pick add $@ %<
 ?S:voidflags:
 ?S:	This variable contains the eventual value of the VOIDFLAGS symbol,
@@ -71,9 +75,9 @@ case "$voidflags" in
 '')
 	$cat >try.c <<'EOCP'
 #if TRY & 1
-void main() {
+void sub() {
 #else
-main() {
+sub() {
 #endif
 	extern void moo();	/* function returning void */
 	void (*goo)();		/* ptr to func returning void */
@@ -91,10 +95,11 @@ main() {
 #endif
 	exit(0);
 }
+main() { sub(); }
 EOCP
 ?X: This unit used to use cc -S in those tests to try to speed up things, but
 ?X: unfortunately, AIX 3.2 does not support this option.
-	if $cc -c -DTRY=$defvoidused try.c >.out 2>&1 ; then
+	if $cc $ccflags -c -DTRY=$defvoidused try.c >.out 2>&1 ; then
 		voidflags=$defvoidused
 	echo "It appears to support void to the level $package wants ($defvoidused)."
 		if $contains warning .out >/dev/null 2>&1; then
@@ -103,16 +108,16 @@ EOCP
 		fi
 	else
 echo "Hmm, your compiler has some difficulty with void. Checking further..." >&4
-		if $cc -c -DTRY=1 try.c >/dev/null 2>&1 ; then
+		if $cc $ccflags -c -DTRY=1 try.c >/dev/null 2>&1; then
 			echo "It supports 1..."
-			if $cc -c -DTRY=3 try.c >/dev/null 2>&1 ; then
+			if $cc $ccflags -c -DTRY=3 try.c >/dev/null 2>&1; then
 				echo "It also supports 2..."
-				if $cc -c -DTRY=7 try.c >/dev/null 2>&1 ; then
+				if $cc $ccflags -c -DTRY=7 try.c >/dev/null 2>&1; then
 					voidflags=7
 					echo "And it supports 4 but not 8 definitely."
 				else
 					echo "It doesn't support 4..."
-					if $cc -c -DTRY=11 try.c >/dev/null 2>&1 ; then
+					if $cc $ccflags -c -DTRY=11 try.c >/dev/null 2>&1; then
 						voidflags=11
 						echo "But it supports 8."
 					else
@@ -122,11 +127,11 @@ echo "Hmm, your compiler has some difficulty with void. Checking further..." >&4
 				fi
 			else
 				echo "It does not support 2..."
-				if $cc -c -DTRY=13 try.c >/dev/null 2>&1 ; then
+				if $cc $ccflags -c -DTRY=13 try.c >/dev/null 2>&1; then
 					voidflags=13
 					echo "But it supports 4 and 8."
 				else
-					if $cc -c -DTRY=5 try.c >/dev/null 2>&1 ; then
+					if $cc $ccflags -c -DTRY=5 try.c >/dev/null 2>&1; then
 						voidflags=5
 						echo "And it supports 4 but has not heard about 8."
 					else
@@ -140,9 +145,15 @@ echo "Hmm, your compiler has some difficulty with void. Checking further..." >&4
 		fi
 	fi
 esac
-dflt="$voidflags";
-rp="Your void support flags add up to what?"
-. ./myread
-voidflags="$ans"
+?X: Only prompt user if support does not match the level we want
+case "$voidflags" in
+"$defvoidused") ;;
+*)
+	dflt="$voidflags";
+	rp="Your void support flags add up to what?"
+	. ./myread
+	voidflags="$ans"
+	;;
+esac
 $rm -f try.* .out
 

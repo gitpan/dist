@@ -1,4 +1,4 @@
-?RCS: $Id: registers.U,v 3.0.1.1 1994/10/29 16:28:33 ram Exp $
+?RCS: $Id: registers.U,v 3.0.1.2 1997/02/28 16:19:41 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: registers.U,v $
+?RCS: Revision 3.0.1.2  1997/02/28  16:19:41  ram
+?RCS: patch61: removed empty ?LINT lines
+?RCS:
 ?RCS: Revision 3.0.1.1  1994/10/29  16:28:33  ram
 ?RCS: patch36: call ./Cppsym explicitely instead of relying on PATH
 ?RCS:
@@ -35,13 +38,11 @@
 ?C:	can freely declare register variables in sub-blocks of code and as
 ?C:	function parameters.  Do not use register<n> more than once per routine.
 ?C:.
-?LINT:
 ?LINT:describe reg1 reg2 reg3 reg4 reg5 reg6 reg7 reg8 reg9 reg10 reg11
 ?LINT:describe reg12 reg13 reg14 reg15 reg16
 ?LINT:known register2 register3 register4 register5 register6 register7
 ?LINT:known register8 register9 register10 register11 register12 register13
 ?LINT:known register14 register15 register16
-?LINT:
 ?H:#define register1 $reg1		/**/
 ?H:#define register2 $reg2		/**/
 ?H:#define register3 $reg3		/**/

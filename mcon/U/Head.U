@@ -1,4 +1,4 @@
-?RCS: $Id: Head.U,v 3.0.1.8 1995/07/25 13:40:02 ram Exp $
+?RCS: $Id: Head.U,v 3.0.1.9 1997/02/28 15:02:09 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,10 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Head.U,v $
+?RCS: Revision 3.0.1.9  1997/02/28  15:02:09  ram
+?RCS: patch61: make sure we unset CDPATH for shells that support this
+?RCS: patch61: improved Korn shell detection and handling
+?RCS:
 ?RCS: Revision 3.0.1.8  1995/07/25  13:40:02  ram
 ?RCS: patch56: added SVR4-ish /opt directories to path list (ADO)
 ?RCS: patch56: OS/2 platforms are using another path separator
@@ -46,6 +50,7 @@
 ?MAKE:	-pick wipe $@ %<
 ?V:PATH p_ me
 ?T:argv Id p paths OS2_SHELL
+?T:inksh needksh avoidksh newsh changesh reason
 #! /bin/sh
 #
 # If these # comments don't work, trim them. Don't worry about any other
@@ -69,8 +74,8 @@
 # (Note: this Configure script was generated automatically. Rather than
 # working with this copy of Configure, you may wish to get metaconfig.
 # The dist-3.0 package (which contains metaconfig) was posted in
-# comp.sources.misc so you may fetch it yourself from your nearest
-# archive site. Check with Archie if you don't know where that can be.)
+# comp.sources.misc and is available on CPAN under authors/id/RAM so
+# you may fetch it yourself from your nearest archive site.)
 #
 ?X:
 ?X: NOTA BENE:
@@ -79,7 +84,7 @@
 ?X: by your version, not mine: It credits your work.
 ?X:
 
-# $Id: Head.U,v 3.0.1.8 1995/07/25 13:40:02 ram Exp $
+# $Id: Head.U,v 3.0.1.9 1997/02/28 15:02:09 ram Exp $
 #
 # Generated on <DATE> [metaconfig <VERSION> PL<PATCHLEVEL>]
 
@@ -167,43 +172,75 @@ done
 PATH=.$p_$PATH
 export PATH
 
-: Sanity checks
-if test ! -t 0; then
-	echo "Say 'sh $me', not 'sh <$me'"
-	exit 1
-fi
-
-: On HP-UX, large Configure scripts may exercise a bug in /bin/sh
-if test -f /hp-ux -a -f /bin/ksh; then
-?X:
-?X: We need to set up PATH before calling the "alias" built-in since some
-?X: systems like HP-UX have a binary called /bin/alias.
-?X:
-	if (PATH=.; alias -x) >/dev/null 2>&1; then
-		: already under /bin/ksh
-	else
-		cat <<'EOM'
-(Feeding myself to ksh to avoid nasty sh bug in "here document" expansion.)
-EOM
-?X: Unset ENV to avoid any ~/.kshrc that could alias cd or whatever...
-		unset ENV
-		exec /bin/ksh $0 "$@"
-	fi
-else
-	: Warn them if they use ksh on other systems
-?X:
+: shall we be using ksh?
+inksh=''
+needksh=''
+avoidksh=''
+newsh=/bin/ksh
+changesh=''
 ?X: Use (alias -x) and not (alias) since zsh and bash recognize the alias
 ?X: builtin but not the -x option which is typically ksh...
-?X:
-	(PATH=.; alias -x) >/dev/null 2>&1 && \
+?X: We need to set up PATH before calling the "alias" built-in since some
+?X: systems like HP-UX have a binary called /bin/alias.
+if (PATH=.; alias -x) >/dev/null 2>&1; then
+		inksh=true
+fi
+?X: On HP-UX, large Configure scripts may exercise a bug in /bin/sh, use ksh
+if test -f /hp-ux -a -f /bin/ksh; then
+	needksh='to avoid sh bug in "here document" expansion'
+fi
+?X: On AIX4, /bin/sh is really ksh and it causes problems, use sh
+if test -d /usr/lpp -a -f /usr/bin/bsh -a -f /usr/bin/uname; then
+	if test X`/usr/bin/uname -v` = X4; then
+		avoidksh="to avoid AIX 4's /bin/sh"
+		newsh=/usr/bin/bsh
+	fi
+fi
+?X: If we are not in ksh and need it, then feed us back to it
+case "$inksh/$needksh" in
+/[a-z]*)
+?X: Unset ENV to avoid any ~/.kshrc that could alias cd or whatever...
+		unset ENV
+		changesh=true
+		reason="$needksh"
+	;;
+esac
+?X: If we are in ksh and must avoid it, then feed us back to a new shell
+case "$inksh/$avoidksh" in
+true/[a-z]*)
+	changesh=true
+	reason="$avoidksh"
+	;;
+esac
+?X: Warn them if they use ksh on other systems, which are those where
+?X: we don't need ksh nor want to avoid it explicitely, yet are using it.
+case "$inksh/$needksh-$avoidksh-" in
+true/--)
 		cat <<EOM
 (I see you are using the Korn shell.  Some ksh's blow up on $me,
-especially on exotic machines.  If yours does, try the Bourne shell instead.)
+mainly on older exotic systems.  If yours does, try the Bourne shell instead.)
 EOM
-fi
+	;;
+esac
+case "$changesh" in
+true)
+	echo "(Feeding myself to $newsh $reason.)"
+?X: Make sure they didn't say sh <Configure by checking whether $0 ends
+?X: with Configure or not. If they did say sh <../../Configure, then too
+?X: bad for them anyway, since we lost that path indication...
+?X: Otherwise, execing $0 ensures we keep the full remote source dir
+?X: indication for src.U.
+	case "$0" in
+	Configure|*/Configure) exec $newsh $0 "$@";;
+	*) exec $newsh Configure "$@";;
+	esac
+	;;
+esac
 
 : Configure runs within the UU subdirectory
 test -d UU || mkdir UU
 ?X: Use ./* to avoid any confirmation prompts from enhanced shells -- WED
+?X: Unset CDPATH to avoid surprised when using cd under some shells
+unset CDPATH
 cd UU && rm -f ./*
 

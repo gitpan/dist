@@ -1,4 +1,4 @@
-?RCS: $Id: libs.U,v 3.0.1.5 1995/07/25 14:12:05 ram Exp $
+?RCS: $Id: libs.U,v 3.0.1.6 1997/02/28 16:09:11 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: libs.U,v $
+?RCS: Revision 3.0.1.6  1997/02/28  16:09:11  ram
+?RCS: patch61: replaced .a with $_a all over the place
+?RCS:
 ?RCS: Revision 3.0.1.5  1995/07/25  14:12:05  ram
 ?RCS: patch56: now knows about OS/2 platforms
 ?RCS:
@@ -29,7 +32,7 @@
 ?RCS: Revision 3.0  1993/08/18  12:09:03  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:libs: test cat Myread Oldconfig Loc libpth package xlibpth so
+?MAKE:libs: test cat Myread Oldconfig Loc libpth package xlibpth so _a
 ?MAKE:	-pick add $@ %<
 ?S:libs:
 ?S:	This variable holds the additional libraries we want to use.
@@ -91,26 +94,26 @@ for thislib in $libswanted; do
 		*"-l$thislib "*);;
 		*) dflt="$dflt -l$thislib";;
 		esac
-	elif xxx=`./loc lib$thislib.a X $libpth`; $test -f "$xxx"; then
+	elif xxx=`./loc lib$thislib$_a X $libpth`; $test -f "$xxx"; then
 		echo "Found -l$thislib."
 		case " $dflt " in
 		*"-l$thislib "*);;
 		*) dflt="$dflt -l$thislib";;
 		esac
 ?X: Don't forget about OS/2 where -lmalloc is spelled out malloc.a
-	elif xxx=`./loc $thislib.a X $libpth`; $test -f "$xxx"; then
+	elif xxx=`./loc $thislib$_a X $libpth`; $test -f "$xxx"; then
 		echo "Found -l$thislib."
 		case " $dflt " in
 		*"-l$thislib "*);;
 		*) dflt="$dflt -l$thislib";;
 		esac
-	elif xxx=`./loc lib${thislib}_s.a X $libpth`; $test -f "$xxx"; then
+	elif xxx=`./loc lib${thislib}_s$_a X $libpth`; $test -f "$xxx"; then
 		echo "Found -l${thislib}_s."
 		case " $dflt " in
 		*"-l$thislib "*);;
 		*) dflt="$dflt -l${thislib}_s";;
 		esac
-	elif xxx=`./loc Slib$thislib.a X $xlibpth`; $test -f "$xxx"; then
+	elif xxx=`./loc Slib$thislib$_a X $xlibpth`; $test -f "$xxx"; then
 		echo "Found -l$thislib."
 		case " $dflt " in
 		*"-l$thislib "*);;
@@ -136,7 +139,7 @@ $cat <<EOM
 Some versions of Unix support shared libraries, which make executables smaller
 but make load time slightly longer.
 
-On some systems, mostly newer Unix System V's, the shared library is included
+On some systems, mostly System V Release 3's, the shared library is included
 by putting the option "-lc_s" as the last thing on the cc command line when
 linking.  Other systems use shared libraries by default.  There may be other
 libraries needed to compile $package on your machine as well.  If your system

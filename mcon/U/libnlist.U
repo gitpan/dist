@@ -1,4 +1,4 @@
-?RCS: $Id: libnlist.U,v 3.0 1993/08/18 12:09:00 ram Exp $
+?RCS: $Id: libnlist.U,v 3.0.1.1 1997/02/28 16:08:02 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,10 +9,15 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: libnlist.U,v $
+?RCS: Revision 3.0.1.1  1997/02/28  16:08:02  ram
+?RCS: patch61: added usrinc and mips on the dependency line
+?RCS: patch61: make sure we call ./mips
+?RCS: patch61: added a ?LINT: hint
+?RCS:
 ?RCS: Revision 3.0  1993/08/18  12:09:00  ram
 ?RCS: Baseline for dist 3.0 netwide release.
 ?RCS:
-?MAKE:libnlist: Loc libpth Guess
+?MAKE:libnlist: Loc libpth Guess usrinc mips _a
 ?MAKE:	-pick add $@ %<
 ?S:libnlist (libmld):
 ?S:	This variable contains the name of the library required to get the
@@ -20,13 +25,14 @@
 ?S:	Under Sys Vr4, it is -lelf.  Otherwise, its value is empty.
 ?S:.
 ?T:xxx
+?LINT:use usrinc mips
 : see if we need a special library for 'nlist()'
 echo " "
 : How about doing this of nlist is not in libc...
-if mips ; then
+if ./mips ; then
 	libnlist='-lmld'
 else
-	xxx=`./loc libelf.a x $libpth`
+	xxx=`./loc libelf$_a x $libpth`
 	case "$xxx" in
 	x)  ;;
 	*)

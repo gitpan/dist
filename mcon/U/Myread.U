@@ -1,4 +1,4 @@
-?RCS: $Id: Myread.U,v 3.0.1.5 1995/01/11 15:14:22 ram Exp $
+?RCS: $Id: Myread.U,v 3.0.1.6 1997/02/28 15:05:39 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,10 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Myread.U,v $
+?RCS: Revision 3.0.1.6  1997/02/28  15:05:39  ram
+?RCS: patch61: myread script now starts with a "startsh"
+?RCS: patch61: miscellaneous fixes
+?RCS:
 ?RCS: Revision 3.0.1.5  1995/01/11  15:14:22  ram
 ?RCS: patch45: added & escape allowing user to turn on -d from the prompt
 ?RCS:
@@ -41,7 +45,7 @@
 ?X: end of Configure, there is an exception to this rule (Finish.U) where we
 ?X: set nostick to a non-empty value to allow the Return key to play its role!
 ?X:
-?MAKE:Myread: Options n c
+?MAKE:Myread: Options startsh n c
 ?MAKE:	-pick add $@ %<
 ?V:ans:dflt rp nostick
 ?F:./myread
@@ -80,6 +84,7 @@ esac"
 
 : now set up to do reads with possible shell escape and default assignment
 cat <<EOSC >myread
+$startsh
 ?X:
 ?X: Save value of default -- do not alter original in case of eval
 ?X:
@@ -117,8 +122,27 @@ while expr "X\$ans" : "X!" >/dev/null; do
 ?X:
 	set x \$xxxm
 	shift
-	aok=''; eval "ans=\"\$answ\"" && aok=y
+	aok=''; eval "ans=\\"\$answ\\"" && aok=y
 	case  "\$answ" in
+?X:
+?X: Use "!" and not a plain ! because of a bug in BSD 4.4 shell
+?X: (reported by Wayne Davison)
+?X: We must handle the shell escapes before dealing with possible variable
+?X: substitution, since the shell we're launching in that case will be able
+?X: to do it as well as we can -- RAM, 15/03/96
+?X
+	"!")
+		sh 1>&4
+		echo " "
+		$myecho
+		;;
+	!*)
+		set x \`expr "X\$ans" : "X!\(.*\)\$"\`
+		shift
+		sh 1>&4 -c "\$*"
+		echo " "
+		$myecho
+		;;
 	"\$ans")
 		case "\$ans" in
 ?X:
@@ -133,28 +157,14 @@ while expr "X\$ans" : "X!" >/dev/null; do
 			case "\$1" in
 			-d)
 				fastread=yes
-				echo "(OK, I'll run with -d after this question.)"
+				echo "(OK, I'll run with -d after this question.)" >&4
 				;;
 			-*)
-				echo "*** Sorry, \$1 not supported yet."
+				echo "*** Sorry, \$1 not supported yet." >&4
 				;;
 			esac
 			$myecho
 			ans=!
-			;;
-?X: Use "!" and not a plain ! because of a bug in BSD 4.4 shell
-?X: (reported by Wayne Davison)
-		"!")
-			sh 1>&4
-			echo " "
-			$myecho
-			;;
-		!*)
-			set x \`expr "X\$ans" : "X!\(.*\)\$"\`
-			shift
-			sh 1>&4 -c "\$*"
-			echo " "
-			$myecho
 			;;
 		esac;;
 	*)

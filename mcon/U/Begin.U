@@ -1,4 +1,4 @@
-?RCS: $Id: Begin.U,v 3.0.1.2 1995/01/30 14:25:08 ram Exp $
+?RCS: $Id: Begin.U,v 3.0.1.3 1997/02/28 14:56:35 ram Exp $
 ?RCS:
 ?RCS: Copyright (c) 1991-1993, Raphael Manfredi
 ?RCS: 
@@ -9,6 +9,9 @@
 ?RCS: of the source tree for dist 3.0.
 ?RCS:
 ?RCS: $Log: Begin.U,v $
+?RCS: Revision 3.0.1.3  1997/02/28  14:56:35  ram
+?RCS: patch61: added Extractall dependency
+?RCS:
 ?RCS: Revision 3.0.1.2  1995/01/30  14:25:08  ram
 ?RCS: patch49: avoid an empty rmlist: systems might choke on it (WED)
 ?RCS:
@@ -22,7 +25,7 @@
 ?X: default initializations performed by Init and Myinit will not clobber
 ?X: any setting done on the command line via -D or -U.
 ?X:
-?MAKE:Begin: Myinit Options package
+?MAKE:Begin: Myinit Options package Extractall
 ?MAKE:	-pick add $@ %<
 : Eunice requires " " instead of "", can you believe it
 echo " "
